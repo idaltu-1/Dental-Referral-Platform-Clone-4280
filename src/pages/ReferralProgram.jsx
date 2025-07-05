@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import ReferralAnalytics from '../components/ReferralAnalytics';
+import SmartReferralMatcher from '../components/SmartReferralMatcher';
+import ReferralStatusTracker from '../components/ReferralStatusTracker';
 
 const { 
   FiShare2, FiUsers, FiGift, FiCopy, FiMail, FiMessageSquare, 
   FiLinkedin, FiTwitter, FiDollarSign, FiTrendingUp, FiStar,
   FiCheck, FiExternalLink, FiCalendar, FiTarget, FiAward,
-  FiUserPlus, FiX, FiSend, FiCreditCard, FiTrophy, FiZap
+  FiUserPlus, FiX, FiSend, FiCreditCard, FiTrophy, FiZap,
+  FiBarChart, FiActivity, FiEye
 } = FiIcons;
 
 const ReferralProgram = () => {
@@ -17,6 +21,58 @@ const ReferralProgram = () => {
   const [showNewReferralModal, setShowNewReferralModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Sample practitioners for smart matching
+  const availablePractitioners = [
+    {
+      id: 1,
+      name: "Dr. Sarah Johnson",
+      specialty: "Orthodontics",
+      practice: "Elite Orthodontics",
+      location: "New York, NY",
+      rating: 4.9,
+      reviews: 127,
+      experience: "15 years",
+      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
+      phone: "+1 (555) 123-4567",
+      email: "sarah.johnson@eliteortho.com",
+      specializations: ["Invisalign", "Braces", "Retainers"],
+      verified: true,
+      responseTime: "< 2 hours"
+    },
+    {
+      id: 2,
+      name: "Dr. Michael Chen",
+      specialty: "Oral Surgery",
+      practice: "Advanced Oral Surgery Center",
+      location: "Los Angeles, CA",
+      rating: 4.8,
+      reviews: 89,
+      experience: "12 years",
+      image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
+      phone: "+1 (555) 987-6543",
+      email: "michael.chen@aosc.com",
+      specializations: ["Implants", "Extractions", "Jaw Surgery"],
+      verified: true,
+      responseTime: "< 4 hours"
+    },
+    {
+      id: 3,
+      name: "Dr. Emily Rodriguez",
+      specialty: "Periodontics",
+      practice: "Gum Health Specialists",
+      location: "Chicago, IL",
+      rating: 4.7,
+      reviews: 156,
+      experience: "18 years",
+      image: "https://images.unsplash.com/photo-1594824947317-d0c8f5c1a2c4?w=150&h=150&fit=crop&crop=face",
+      phone: "+1 (555) 456-7890",
+      email: "emily.rodriguez@gumhealth.com",
+      specializations: ["Gum Disease", "Implants", "Cosmetic Gum Surgery"],
+      verified: true,
+      responseTime: "< 1 hour"
+    }
+  ];
 
   // New Referral Form State
   const [newReferral, setNewReferral] = useState({
@@ -229,6 +285,12 @@ Dr. Smith`
     }
   };
 
+  const handleReferralSent = (practitioner) => {
+    console.log('Referral sent to:', practitioner.name);
+    // This would typically update the referral tracking system
+    alert(`Referral sent to ${practitioner.name} successfully!`);
+  };
+
   const shareViaEmail = () => {
     const template = shareTemplates.email;
     const mailtoLink = `mailto:?subject=${encodeURIComponent(template.subject)}&body=${encodeURIComponent(template.body)}`;
@@ -284,257 +346,343 @@ Dr. Smith`
           </button>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-xl shadow-lg"
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'overview'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dental-600 text-sm font-medium">Total Referrals</p>
-                <p className="text-2xl font-bold text-dental-900">{referralStats.totalReferrals}</p>
-              </div>
-              <SafeIcon icon={FiUsers} className="w-8 h-8 text-primary-600" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white p-6 rounded-xl shadow-lg"
+            <SafeIcon icon={FiTrendingUp} className="w-4 h-4 inline mr-2" />
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'analytics'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dental-600 text-sm font-medium">Total Earnings</p>
-                <p className="text-2xl font-bold text-dental-900">${referralStats.totalEarnings}</p>
-              </div>
-              <SafeIcon icon={FiDollarSign} className="w-8 h-8 text-green-600" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white"
+            <SafeIcon icon={FiBarChart} className="w-4 h-4 inline mr-2" />
+            Analytics
+          </button>
+          <button
+            onClick={() => setActiveTab('smart-matching')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'smart-matching'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Available Balance</p>
-                <p className="text-2xl font-bold">${referralStats.availableBalance}</p>
-              </div>
-              <SafeIcon icon={FiCreditCard} className="w-8 h-8 text-green-200" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white p-6 rounded-xl shadow-lg"
+            <SafeIcon icon={FiTarget} className="w-4 h-4 inline mr-2" />
+            Smart Matching
+          </button>
+          <button
+            onClick={() => setActiveTab('status-tracker')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'status-tracker'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-dental-600 text-sm font-medium">Pending Earnings</p>
-                <p className="text-2xl font-bold text-dental-900">${referralStats.pendingEarnings}</p>
-              </div>
-              <SafeIcon icon={FiCalendar} className="w-8 h-8 text-yellow-600" />
-            </div>
-          </motion.div>
+            <SafeIcon icon={FiActivity} className="w-4 h-4 inline mr-2" />
+            Status Tracker
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Share Your Referral Code */}
-          <div className="lg:col-span-2 space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white p-6 rounded-xl shadow-lg"
-            >
-              <h2 className="text-2xl font-semibold text-dental-900 mb-6">
-                Share Your Referral Code
-              </h2>
-              
-              {/* Referral Code Display */}
-              <div className="bg-gradient-to-r from-primary-50 to-primary-100 p-6 rounded-lg mb-6">
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white p-6 rounded-xl shadow-lg"
+              >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-dental-600 text-sm font-medium">Your referral code</p>
-                    <p className="text-2xl font-bold text-dental-900 font-mono">{referralCode}</p>
+                    <p className="text-dental-600 text-sm font-medium">Total Referrals</p>
+                    <p className="text-2xl font-bold text-dental-900">{referralStats.totalReferrals}</p>
                   </div>
-                  <button
-                    onClick={() => copyToClipboard(referralCode, 'code')}
-                    className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
-                  >
-                    <SafeIcon icon={copiedCode ? FiCheck : FiCopy} className="w-4 h-4" />
-                    <span>{copiedCode ? 'Copied!' : 'Copy'}</span>
-                  </button>
+                  <SafeIcon icon={FiUsers} className="w-8 h-8 text-primary-600" />
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Share Methods */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-dental-900">Share via:</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Email Sharing */}
-                  <div className="border border-dental-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <SafeIcon icon={FiMail} className="w-6 h-6 text-primary-600" />
-                      <h4 className="font-semibold text-dental-900">Email</h4>
-                    </div>
-                    <p className="text-dental-600 text-sm mb-4">
-                      Send a personalized email invitation
-                    </p>
-                    <button
-                      onClick={shareViaEmail}
-                      className="w-full bg-primary-500 text-white py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <SafeIcon icon={FiExternalLink} className="w-4 h-4" />
-                      <span>Open Email Client</span>
-                    </button>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white p-6 rounded-xl shadow-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-dental-600 text-sm font-medium">Total Earnings</p>
+                    <p className="text-2xl font-bold text-dental-900">${referralStats.totalEarnings}</p>
                   </div>
-
-                  {/* Social Media Sharing */}
-                  <div className="border border-dental-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <SafeIcon icon={FiShare2} className="w-6 h-6 text-primary-600" />
-                      <h4 className="font-semibold text-dental-900">Social Media</h4>
-                    </div>
-                    <p className="text-dental-600 text-sm mb-4">
-                      Share on your social networks
-                    </p>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => shareViaSocial('linkedin')}
-                        className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-                      >
-                        <SafeIcon icon={FiLinkedin} className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => shareViaSocial('twitter')}
-                        className="flex-1 bg-sky-500 text-white py-2 rounded-lg hover:bg-sky-600 transition-colors flex items-center justify-center"
-                      >
-                        <SafeIcon icon={FiTwitter} className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                  <SafeIcon icon={FiDollarSign} className="w-8 h-8 text-green-600" />
                 </div>
+              </motion.div>
 
-                {/* Direct Share */}
-                <div className="border border-dental-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <SafeIcon icon={FiMessageSquare} className="w-6 h-6 text-primary-600" />
-                    <h4 className="font-semibold text-dental-900">Direct Message</h4>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm font-medium">Available Balance</p>
+                    <p className="text-2xl font-bold">${referralStats.availableBalance}</p>
                   </div>
-                  <p className="text-dental-600 text-sm mb-3">
-                    Copy this message to share directly:
-                  </p>
-                  <div className="bg-dental-50 p-3 rounded-lg">
-                    <p className="text-sm text-dental-700">{shareTemplates.direct.message}</p>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(shareTemplates.direct.message, 'message')}
-                    className="mt-3 w-full bg-dental-200 text-dental-700 py-2 rounded-lg hover:bg-dental-300 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <SafeIcon icon={copiedMessage ? FiCheck : FiCopy} className="w-4 h-4" />
-                    <span>{copiedMessage ? 'Copied!' : 'Copy Message'}</span>
-                  </button>
+                  <SafeIcon icon={FiCreditCard} className="w-8 h-8 text-green-200" />
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Recent Referrals */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-white p-6 rounded-xl shadow-lg"
-            >
-              <h2 className="text-2xl font-semibold text-dental-900 mb-6">Recent Referrals</h2>
-              <div className="space-y-4">
-                {recentReferrals.map((referral, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                        <SafeIcon icon={FiUsers} className="w-6 h-6 text-primary-600" />
-                      </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white p-6 rounded-xl shadow-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-dental-600 text-sm font-medium">Pending Earnings</p>
+                    <p className="text-2xl font-bold text-dental-900">${referralStats.pendingEarnings}</p>
+                  </div>
+                  <SafeIcon icon={FiCalendar} className="w-8 h-8 text-yellow-600" />
+                </div>
+              </motion.div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Share Your Referral Code */}
+              <div className="lg:col-span-2 space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-white p-6 rounded-xl shadow-lg"
+                >
+                  <h2 className="text-2xl font-semibold text-dental-900 mb-6">
+                    Share Your Referral Code
+                  </h2>
+                  
+                  {/* Referral Code Display */}
+                  <div className="bg-gradient-to-r from-primary-50 to-primary-100 p-6 rounded-lg mb-6">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-dental-900">{referral.name}</p>
-                        <p className="text-sm text-dental-600">{referral.specialty}</p>
-                        <p className="text-xs text-dental-500">Joined: {referral.joinDate}</p>
+                        <p className="text-dental-600 text-sm font-medium">Your referral code</p>
+                        <p className="text-2xl font-bold text-dental-900 font-mono">{referralCode}</p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          referral.status === 'Active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
+                      <button
+                        onClick={() => copyToClipboard(referralCode, 'code')}
+                        className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
                       >
-                        {referral.status}
-                      </span>
-                      <p className="text-sm text-dental-600 mt-1">{referral.reward}</p>
+                        <SafeIcon icon={copiedCode ? FiCheck : FiCopy} className="w-4 h-4" />
+                        <span>{copiedCode ? 'Copied!' : 'Copy'}</span>
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
 
-          {/* Referral Tiers */}
+                  {/* Share Methods */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-dental-900">Share via:</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Email Sharing */}
+                      <div className="border border-dental-200 rounded-lg p-4">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <SafeIcon icon={FiMail} className="w-6 h-6 text-primary-600" />
+                          <h4 className="font-semibold text-dental-900">Email</h4>
+                        </div>
+                        <p className="text-dental-600 text-sm mb-4">
+                          Send a personalized email invitation
+                        </p>
+                        <button
+                          onClick={shareViaEmail}
+                          className="w-full bg-primary-500 text-white py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <SafeIcon icon={FiExternalLink} className="w-4 h-4" />
+                          <span>Open Email Client</span>
+                        </button>
+                      </div>
+
+                      {/* Social Media Sharing */}
+                      <div className="border border-dental-200 rounded-lg p-4">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <SafeIcon icon={FiShare2} className="w-6 h-6 text-primary-600" />
+                          <h4 className="font-semibold text-dental-900">Social Media</h4>
+                        </div>
+                        <p className="text-dental-600 text-sm mb-4">
+                          Share on your social networks
+                        </p>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => shareViaSocial('linkedin')}
+                            className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                          >
+                            <SafeIcon icon={FiLinkedin} className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => shareViaSocial('twitter')}
+                            className="flex-1 bg-sky-500 text-white py-2 rounded-lg hover:bg-sky-600 transition-colors flex items-center justify-center"
+                          >
+                            <SafeIcon icon={FiTwitter} className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Direct Share */}
+                    <div className="border border-dental-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <SafeIcon icon={FiMessageSquare} className="w-6 h-6 text-primary-600" />
+                        <h4 className="font-semibold text-dental-900">Direct Message</h4>
+                      </div>
+                      <p className="text-dental-600 text-sm mb-3">
+                        Copy this message to share directly:
+                      </p>
+                      <div className="bg-dental-50 p-3 rounded-lg">
+                        <p className="text-sm text-dental-700">{shareTemplates.direct.message}</p>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(shareTemplates.direct.message, 'message')}
+                        className="mt-3 w-full bg-dental-200 text-dental-700 py-2 rounded-lg hover:bg-dental-300 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <SafeIcon icon={copiedMessage ? FiCheck : FiCopy} className="w-4 h-4" />
+                        <span>{copiedMessage ? 'Copied!' : 'Copy Message'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Recent Referrals */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="bg-white p-6 rounded-xl shadow-lg"
+                >
+                  <h2 className="text-2xl font-semibold text-dental-900 mb-6">Recent Referrals</h2>
+                  <div className="space-y-4">
+                    {recentReferrals.map((referral, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                            <SafeIcon icon={FiUsers} className="w-6 h-6 text-primary-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-dental-900">{referral.name}</p>
+                            <p className="text-sm text-dental-600">{referral.specialty}</p>
+                            <p className="text-xs text-dental-500">Joined: {referral.joinDate}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              referral.status === 'Active'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {referral.status}
+                          </span>
+                          <p className="text-sm text-dental-600 mt-1">{referral.reward}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Referral Tiers */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-white p-6 rounded-xl shadow-lg"
+              >
+                <h2 className="text-xl font-semibold text-dental-900 mb-6">Referral Rewards</h2>
+                <div className="space-y-4">
+                  {referralTiers.map((tier, index) => (
+                    <div 
+                      key={index} 
+                      className={`border-2 rounded-lg p-4 ${
+                        tier.current ? 'border-primary-500 bg-primary-50' : 'border-dental-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-dental-900">{tier.referrals} Referrals</span>
+                        <span className="text-lg font-bold text-primary-600">{tier.reward}</span>
+                      </div>
+                      <p className="text-sm text-dental-600 mb-2">{tier.description}</p>
+                      <div className="bg-primary-100 px-2 py-1 rounded text-xs text-primary-600 inline-block">
+                        {tier.bonus}
+                      </div>
+                      {tier.current && (
+                        <div className="mt-2 flex items-center text-xs text-primary-600">
+                          <SafeIcon icon={FiTrophy} className="w-4 h-4 mr-1" />
+                          Current Tier
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 p-4 bg-primary-50 rounded-lg">
+                  <h3 className="font-semibold text-primary-900 mb-2">How it works:</h3>
+                  <ul className="text-sm text-primary-700 space-y-1">
+                    <li>• Share your referral code</li>
+                    <li>• Colleague signs up using your code</li>
+                    <li>• They complete onboarding</li>
+                    <li>• You both get rewarded!</li>
+                  </ul>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white p-6 rounded-xl shadow-lg"
           >
-            <h2 className="text-xl font-semibold text-dental-900 mb-6">Referral Rewards</h2>
-            <div className="space-y-4">
-              {referralTiers.map((tier, index) => (
-                <div 
-                  key={index} 
-                  className={`border-2 rounded-lg p-4 ${
-                    tier.current ? 'border-primary-500 bg-primary-50' : 'border-dental-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-dental-900">{tier.referrals} Referrals</span>
-                    <span className="text-lg font-bold text-primary-600">{tier.reward}</span>
-                  </div>
-                  <p className="text-sm text-dental-600 mb-2">{tier.description}</p>
-                  <div className="bg-primary-100 px-2 py-1 rounded text-xs text-primary-600 inline-block">
-                    {tier.bonus}
-                  </div>
-                  {tier.current && (
-                    <div className="mt-2 flex items-center text-xs text-primary-600">
-                      <SafeIcon icon={FiTrophy} className="w-4 h-4 mr-1" />
-                      Current Tier
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 p-4 bg-primary-50 rounded-lg">
-              <h3 className="font-semibold text-primary-900 mb-2">How it works:</h3>
-              <ul className="text-sm text-primary-700 space-y-1">
-                <li>• Share your referral code</li>
-                <li>• Colleague signs up using your code</li>
-                <li>• They complete onboarding</li>
-                <li>• You both get rewarded!</li>
-              </ul>
-            </div>
+            <ReferralAnalytics referralStats={referralStats} />
           </motion.div>
-        </div>
+        )}
+
+        {/* Smart Matching Tab */}
+        {activeTab === 'smart-matching' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <SmartReferralMatcher 
+              availablePractitioners={availablePractitioners}
+              onReferralSent={handleReferralSent}
+            />
+          </motion.div>
+        )}
+
+        {/* Status Tracker Tab */}
+        {activeTab === 'status-tracker' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <ReferralStatusTracker />
+          </motion.div>
+        )}
 
         {/* New Referral Modal */}
         {showNewReferralModal && (
