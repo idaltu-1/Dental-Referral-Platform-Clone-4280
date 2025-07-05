@@ -1,0 +1,428 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import * as FiIcons from 'react-icons/fi';
+import SafeIcon from '../common/SafeIcon';
+import RoleGuard from '../components/RoleGuard';
+import { useRole } from '../context/RoleContext';
+
+const { 
+  FiUsers, FiUserPlus, FiEdit, FiTrash2, FiSearch, FiFilter, 
+  FiMoreVertical, FiMail, FiPhone, FiMapPin, FiShield, FiEye,
+  FiUserCheck, FiUserX, FiSettings, FiDownload, FiUpload
+} = FiIcons;
+
+const UserManagement = () => {
+  const { roles } = useRole();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRole, setSelectedRole] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showActionMenu, setShowActionMenu] = useState(null);
+
+  const users = [
+    {
+      id: 1,
+      name: 'Dr. Sarah Johnson',
+      email: 'sarah.johnson@example.com',
+      phone: '+1 (555) 123-4567',
+      role: 'PRACTICE_OWNER',
+      status: 'Active',
+      practice: 'Elite Dental Care',
+      location: 'New York, NY',
+      joinDate: '2023-01-15',
+      lastLogin: '2024-01-20',
+      avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face'
+    },
+    {
+      id: 2,
+      name: 'Dr. Michael Chen',
+      email: 'michael.chen@example.com',
+      phone: '+1 (555) 987-6543',
+      role: 'DENTIST',
+      status: 'Active',
+      practice: 'Smile Specialists',
+      location: 'Los Angeles, CA',
+      joinDate: '2023-02-20',
+      lastLogin: '2024-01-19',
+      avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face'
+    },
+    {
+      id: 3,
+      name: 'Jennifer Martinez',
+      email: 'jennifer.martinez@example.com',
+      phone: '+1 (555) 456-7890',
+      role: 'STAFF',
+      status: 'Active',
+      practice: 'Elite Dental Care',
+      location: 'New York, NY',
+      joinDate: '2023-03-10',
+      lastLogin: '2024-01-18',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b332c3a2?w=150&h=150&fit=crop&crop=face'
+    },
+    {
+      id: 4,
+      name: 'Dr. Robert Wilson',
+      email: 'robert.wilson@example.com',
+      phone: '+1 (555) 234-5678',
+      role: 'DENTIST',
+      status: 'Inactive',
+      practice: 'Family Dental',
+      location: 'Chicago, IL',
+      joinDate: '2023-04-05',
+      lastLogin: '2024-01-10',
+      avatar: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face'
+    },
+    {
+      id: 5,
+      name: 'Dr. Emily Rodriguez',
+      email: 'emily.rodriguez@example.com',
+      phone: '+1 (555) 345-6789',
+      role: 'ADMIN',
+      status: 'Active',
+      practice: 'System Admin',
+      location: 'Remote',
+      joinDate: '2022-12-01',
+      lastLogin: '2024-01-20',
+      avatar: 'https://images.unsplash.com/photo-1594824947317-d0c8f5c1a2c4?w=150&h=150&fit=crop&crop=face'
+    }
+  ];
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.practice.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = selectedRole === 'All' || user.role === selectedRole;
+    const matchesStatus = selectedStatus === 'All' || user.status === selectedStatus;
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Active': return 'bg-green-100 text-green-800';
+      case 'Inactive': return 'bg-red-100 text-red-800';
+      case 'Pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'ADMIN': return 'bg-purple-100 text-purple-800';
+      case 'PRACTICE_OWNER': return 'bg-blue-100 text-blue-800';
+      case 'DENTIST': return 'bg-green-100 text-green-800';
+      case 'STAFF': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowAddModal(true);
+  };
+
+  const handleDeleteUser = (userId) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      // Handle delete logic
+      console.log('Deleting user:', userId);
+    }
+  };
+
+  const handleToggleStatus = (userId) => {
+    // Handle status toggle logic
+    console.log('Toggling status for user:', userId);
+  };
+
+  return (
+    <RoleGuard requiredPermission="manage_users">
+      <div className="min-h-screen bg-dental-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="mb-8">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-3xl font-bold text-dental-900 mb-2"
+            >
+              User Management
+            </motion.h1>
+            <p className="text-dental-600">Manage users, roles, and permissions</p>
+          </div>
+
+          {/* Controls */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white p-6 rounded-xl shadow-lg mb-8"
+          >
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Search */}
+                <div className="relative">
+                  <SafeIcon icon={FiSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dental-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-64 pl-10 pr-4 py-2 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <div className="relative">
+                  <SafeIcon icon={FiFilter} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dental-400 w-5 h-5" />
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="All">All Roles</option>
+                    {Object.entries(roles).map(([key, role]) => (
+                      <option key={key} value={key}>{role.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="relative">
+                  <SafeIcon icon={FiShield} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dental-400 w-5 h-5" />
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="All">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <button className="bg-dental-100 text-dental-600 px-4 py-2 rounded-lg font-medium hover:bg-dental-200 transition-colors flex items-center space-x-2">
+                  <SafeIcon icon={FiDownload} className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
+                <button className="bg-dental-100 text-dental-600 px-4 py-2 rounded-lg font-medium hover:bg-dental-200 transition-colors flex items-center space-x-2">
+                  <SafeIcon icon={FiUpload} className="w-4 h-4" />
+                  <span>Import</span>
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-primary-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-600 transition-colors flex items-center space-x-2"
+                >
+                  <SafeIcon icon={FiUserPlus} className="w-4 h-4" />
+                  <span>Add User</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white p-6 rounded-xl shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-dental-600 text-sm font-medium">Total Users</p>
+                  <p className="text-2xl font-bold text-dental-900">{users.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <SafeIcon icon={FiUsers} className="w-6 h-6 text-primary-600" />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white p-6 rounded-xl shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-dental-600 text-sm font-medium">Active Users</p>
+                  <p className="text-2xl font-bold text-dental-900">
+                    {users.filter(u => u.status === 'Active').length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <SafeIcon icon={FiUserCheck} className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-white p-6 rounded-xl shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-dental-600 text-sm font-medium">Admins</p>
+                  <p className="text-2xl font-bold text-dental-900">
+                    {users.filter(u => u.role === 'ADMIN').length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <SafeIcon icon={FiShield} className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-white p-6 rounded-xl shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-dental-600 text-sm font-medium">Dentists</p>
+                  <p className="text-2xl font-bold text-dental-900">
+                    {users.filter(u => u.role === 'DENTIST').length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <SafeIcon icon={FiUsers} className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Users Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="bg-white rounded-xl shadow-lg overflow-hidden"
+          >
+            <div className="p-6 border-b border-dental-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-dental-900">
+                  Users ({filteredUsers.length})
+                </h2>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-dental-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Practice
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Last Login
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-dental-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-dental-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-dental-900">
+                              {user.name}
+                            </div>
+                            <div className="text-sm text-dental-500">
+                              {user.email}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
+                          {roles[user.role]?.name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-dental-900">{user.practice}</div>
+                        <div className="text-sm text-dental-500">{user.location}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-dental-500">
+                        {user.lastLogin}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
+                            className="text-dental-400 hover:text-dental-600"
+                          >
+                            <SafeIcon icon={FiMoreVertical} className="w-5 h-5" />
+                          </button>
+                          
+                          {showActionMenu === user.id && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-dental-200 z-10">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => handleEditUser(user)}
+                                  className="flex items-center px-4 py-2 text-sm text-dental-700 hover:bg-dental-50 w-full"
+                                >
+                                  <SafeIcon icon={FiEdit} className="w-4 h-4 mr-2" />
+                                  Edit User
+                                </button>
+                                <button
+                                  onClick={() => handleToggleStatus(user.id)}
+                                  className="flex items-center px-4 py-2 text-sm text-dental-700 hover:bg-dental-50 w-full"
+                                >
+                                  <SafeIcon icon={user.status === 'Active' ? FiUserX : FiUserCheck} className="w-4 h-4 mr-2" />
+                                  {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full"
+                                >
+                                  <SafeIcon icon={FiTrash2} className="w-4 h-4 mr-2" />
+                                  Delete User
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </RoleGuard>
+  );
+};
+
+export default UserManagement;
