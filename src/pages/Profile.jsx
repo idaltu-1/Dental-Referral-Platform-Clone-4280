@@ -5,25 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 import { useAuth } from '../context/AuthContext';
 import { DatabaseService } from '../lib/supabase';
 
-const {
-  FiUser,
-  FiMail,
-  FiPhone,
-  FiMapPin,
-  FiBuilding,
-  FiEdit,
-  FiSave,
-  FiCamera,
-  FiShield,
-  FiAward,
-  FiCalendar,
-  FiStar,
-  FiTrendingUp,
-  FiUsers,
-  FiFileText,
-  FiCheck,
-  FiX
-} = FiIcons;
+const { FiUser, FiMail, FiPhone, FiMapPin, FiBuilding, FiEdit, FiSave, FiCamera, FiShield, FiAward, FiCalendar, FiStar, FiTrendingUp, FiUsers, FiFileText, FiCheck, FiX, FiAlertTriangle } = FiIcons;
 
 const Profile = () => {
   const { user } = useAuth();
@@ -31,7 +13,8 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
-  
+  const [isLoading, setIsLoading] = useState(true);
+
   // Initialize with user data if available
   const [profileData, setProfileData] = useState({
     name: user?.name || 'Dr. Sarah Johnson',
@@ -71,10 +54,15 @@ const Profile = () => {
   }, [user]);
 
   const loadProfile = async () => {
-    if (!user?.userId) return;
-    
+    if (!user?.userId) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      setIsLoading(true);
       const savedProfile = await DatabaseService.getProfile(user.userId);
+      
       if (savedProfile) {
         const mergedData = { ...profileData, ...savedProfile };
         setProfileData(mergedData);
@@ -82,6 +70,9 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error loading profile:', error);
+      // Don't show error to user, just use default data
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -100,34 +91,33 @@ const Profile = () => {
   ];
 
   const handleInputChange = (field, value) => {
-    setProfileData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setProfileData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
+    if (!user?.userId) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(null), 3000);
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus(null);
-    
+
     try {
       // Save to database
-      if (user?.userId) {
-        await DatabaseService.saveProfile(user.userId, profileData);
-      }
+      await DatabaseService.saveProfile(user.userId, profileData);
       
       // Update localStorage as backup
       localStorage.setItem('userProfile', JSON.stringify(profileData));
       
       // Update original data to reflect saved state
       setOriginalData({ ...profileData });
-      
       setIsEditing(false);
       setSaveStatus('success');
       
       // Clear success message after 3 seconds
       setTimeout(() => setSaveStatus(null), 3000);
-      
     } catch (error) {
       console.error('Error saving profile:', error);
       setSaveStatus('error');
@@ -149,10 +139,7 @@ const Profile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setProfileData(prev => ({
-          ...prev,
-          avatar: e.target.result
-        }));
+        setProfileData(prev => ({ ...prev, avatar: e.target.result }));
       };
       reader.readAsDataURL(file);
     }
@@ -160,6 +147,17 @@ const Profile = () => {
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = JSON.stringify(profileData) !== JSON.stringify(originalData);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-dental-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-dental-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dental-50 py-8">
@@ -182,19 +180,19 @@ const Profile = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className={`mb-6 p-4 rounded-lg border ${
-              saveStatus === 'success' 
-                ? 'bg-green-50 border-green-200 text-green-800' 
+              saveStatus === 'success'
+                ? 'bg-green-50 border-green-200 text-green-800'
                 : 'bg-red-50 border-red-200 text-red-800'
             }`}
           >
             <div className="flex items-center space-x-2">
-              <SafeIcon 
-                icon={saveStatus === 'success' ? FiCheck : FiX} 
-                className={`w-5 h-5 ${saveStatus === 'success' ? 'text-green-600' : 'text-red-600'}`} 
+              <SafeIcon
+                icon={saveStatus === 'success' ? FiCheck : FiX}
+                className={`w-5 h-5 ${saveStatus === 'success' ? 'text-green-600' : 'text-red-600'}`}
               />
               <p>
-                {saveStatus === 'success' 
-                  ? 'Profile saved successfully!' 
+                {saveStatus === 'success'
+                  ? 'Profile saved successfully!'
                   : 'Failed to save profile. Please try again.'}
               </p>
             </div>
@@ -230,6 +228,9 @@ const Profile = () => {
                 src={profileData.avatar}
                 alt={profileData.name}
                 className="w-24 h-24 rounded-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face';
+                }}
               />
               {isEditing && (
                 <label className="absolute bottom-0 right-0 bg-primary-500 text-white rounded-full p-2 cursor-pointer hover:bg-primary-600 transition-colors">
@@ -408,7 +409,6 @@ const Profile = () => {
                     <span className="text-dental-600">{profileData.email}</span>
                   )}
                 </div>
-                
                 <div className="flex items-center space-x-3">
                   <SafeIcon icon={FiPhone} className="w-5 h-5 text-dental-400" />
                   {isEditing ? (
@@ -423,12 +423,10 @@ const Profile = () => {
                     <span className="text-dental-600">{profileData.phone}</span>
                   )}
                 </div>
-                
                 <div className="flex items-center space-x-3">
                   <SafeIcon icon={FiBuilding} className="w-5 h-5 text-dental-400" />
                   <span className="text-dental-600">{profileData.practice}</span>
                 </div>
-                
                 <div className="flex items-center space-x-3">
                   <SafeIcon icon={FiMapPin} className="w-5 h-5 text-dental-400" />
                   <span className="text-dental-600">{profileData.location}</span>
@@ -460,7 +458,6 @@ const Profile = () => {
                   <p className="text-dental-600">{profileData.licenseNumber}</p>
                 )}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-dental-700 mb-2">Experience</label>
                 {isEditing ? (
@@ -475,7 +472,6 @@ const Profile = () => {
                   <p className="text-dental-600">{profileData.experience}</p>
                 )}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-dental-700 mb-2">Education</label>
                 {isEditing ? (
@@ -490,7 +486,6 @@ const Profile = () => {
                   <p className="text-dental-600">{profileData.education}</p>
                 )}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-dental-700 mb-2">Website</label>
                 {isEditing ? (
@@ -554,7 +549,7 @@ const Profile = () => {
                   ))}
                 </div>
               </div>
-
+              
               <div className="bg-white p-6 rounded-xl shadow-lg">
                 <h3 className="text-xl font-semibold text-dental-900 mb-4">Insurance Accepted</h3>
                 <div className="space-y-2">

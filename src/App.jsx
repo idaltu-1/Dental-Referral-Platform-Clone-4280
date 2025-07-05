@@ -3,7 +3,6 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QuestProvider } from '@questlabs/react-sdk';
 import '@questlabs/react-sdk/dist/style.css';
-
 import { AuthProvider } from './context/AuthContext';
 import { RoleProvider } from './context/RoleContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -11,6 +10,7 @@ import StripeProvider from './components/StripeProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import FeedbackButton from './components/FeedbackButton';
 import questConfig from './config/questConfig';
 
 // Pages
@@ -39,7 +39,7 @@ import HelpHub from './pages/HelpHub';
 function App() {
   return (
     <ErrorBoundary>
-      <QuestProvider
+      <QuestProvider 
         apiKey={questConfig.APIKEY}
         entityId={questConfig.ENTITYID}
         apiType="PRODUCTION"
@@ -135,6 +135,9 @@ function App() {
                     </Routes>
                   </motion.main>
                   <Footer />
+                  
+                  {/* Global Floating Feedback Button */}
+                  <FeedbackButton />
                 </div>
               </Router>
             </StripeProvider>

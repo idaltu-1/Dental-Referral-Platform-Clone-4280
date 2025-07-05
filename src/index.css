@@ -18,3 +18,119 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* Quest SDK Feedback Workflow Custom Styles */
+.quest-feedback-workflow {
+  border-radius: 12px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid #e2e8f0 !important;
+  background: white !important;
+}
+
+.quest-feedback-workflow .quest-header {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 16px !important;
+}
+
+.quest-feedback-workflow .quest-content {
+  padding: 20px !important;
+  background: white !important;
+}
+
+.quest-feedback-workflow .quest-button {
+  background: #0ea5e9 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.quest-feedback-workflow .quest-button:hover {
+  background: #0284c7 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3) !important;
+}
+
+.quest-feedback-workflow .quest-input,
+.quest-feedback-workflow .quest-textarea,
+.quest-feedback-workflow .quest-select {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.quest-feedback-workflow .quest-input:focus,
+.quest-feedback-workflow .quest-textarea:focus,
+.quest-feedback-workflow .quest-select:focus {
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1) !important;
+  outline: none !important;
+}
+
+.quest-feedback-workflow .quest-close-button {
+  color: #64748b !important;
+  transition: color 0.2s ease !important;
+}
+
+.quest-feedback-workflow .quest-close-button:hover {
+  color: #334155 !important;
+}
+
+/* Feedback Button Animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.feedback-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Mobile Responsive Feedback */
+@media (max-width: 768px) {
+  .quest-feedback-workflow {
+    width: calc(100vw - 32px) !important;
+    max-width: 400px !important;
+    right: 16px !important;
+  }
+}
+
+/* Thank You Animation */
+.quest-feedback-workflow .quest-thank-you {
+  text-align: center !important;
+  padding: 24px !important;
+}
+
+.quest-feedback-workflow .quest-thank-you-icon {
+  width: 48px !important;
+  height: 48px !important;
+  margin: 0 auto 16px !important;
+  background: #10b981 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  animation: bounce 0.6s ease-in-out !important;
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
