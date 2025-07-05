@@ -3,10 +3,22 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useAuth } from '../context/AuthContext';
 
-const { FiArrowRight, FiUsers, FiTrendingUp, FiShield, FiZap, FiStar } = FiIcons;
+const {
+  FiArrowRight,
+  FiUsers,
+  FiTrendingUp,
+  FiShield,
+  FiZap,
+  FiStar,
+  FiActivity,
+  FiBarChart3
+} = FiIcons;
 
 const Home = () => {
+  const { isAuthenticated, user } = useAuth();
+
   const features = [
     {
       icon: FiUsers,
@@ -92,20 +104,58 @@ const Home = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
-              <Link
-                to="/dashboard"
-                className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
-              >
-                <span>Start Free Trial</span>
-                <SafeIcon icon={FiArrowRight} className="w-5 h-5" />
-              </Link>
-              <Link
-                to="/features"
-                className="border-2 border-primary-200 text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-primary-50 transition-all duration-200"
-              >
-                Learn More
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  {/* Dashboard Button for Authenticated Users */}
+                  <Link
+                    to="/dashboard"
+                    className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                  >
+                    <SafeIcon icon={FiBarChart3} className="w-5 h-5" />
+                    <span>Go to Dashboard</span>
+                    <SafeIcon icon={FiArrowRight} className="w-5 h-5" />
+                  </Link>
+                  <Link
+                    to="/referrals"
+                    className="border-2 border-primary-200 text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-primary-50 transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <SafeIcon icon={FiActivity} className="w-5 h-5" />
+                    <span>Manage Referrals</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {/* Login/Signup Buttons for Non-Authenticated Users */}
+                  <Link
+                    to="/login"
+                    className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                  >
+                    <span>Start Free Trial</span>
+                    <SafeIcon icon={FiArrowRight} className="w-5 h-5" />
+                  </Link>
+                  <Link
+                    to="/features"
+                    className="border-2 border-primary-200 text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-primary-50 transition-all duration-200"
+                  >
+                    Learn More
+                  </Link>
+                </>
+              )}
             </motion.div>
+
+            {/* User Welcome Message for Authenticated Users */}
+            {isAuthenticated && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+                className="mt-8 p-4 bg-primary-50 border border-primary-200 rounded-xl max-w-md mx-auto"
+              >
+                <p className="text-primary-700">
+                  Welcome back! Access your dashboard to manage referrals and track your network growth.
+                </p>
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -115,6 +165,70 @@ const Home = () => {
           <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-dental-100 rounded-full blur-3xl opacity-50"></div>
         </div>
       </section>
+
+      {/* Quick Access Section for Authenticated Users */}
+      {isAuthenticated && (
+        <section className="py-16 bg-gradient-to-r from-primary-50 to-primary-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-dental-900 mb-4">
+                Quick Access
+              </h2>
+              <p className="text-xl text-dental-600 max-w-2xl mx-auto">
+                Jump directly to the tools you use most
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { 
+                  icon: FiBarChart3, 
+                  title: "Dashboard", 
+                  description: "View analytics & overview",
+                  link: "/dashboard",
+                  color: "from-blue-500 to-blue-600"
+                },
+                { 
+                  icon: FiActivity, 
+                  title: "Referrals", 
+                  description: "Manage patient referrals",
+                  link: "/referrals",
+                  color: "from-green-500 to-green-600"
+                },
+                { 
+                  icon: FiUsers, 
+                  title: "Network", 
+                  description: "Browse professionals",
+                  link: "/network",
+                  color: "from-purple-500 to-purple-600"
+                },
+                { 
+                  icon: FiTrendingUp, 
+                  title: "Analytics", 
+                  description: "Advanced reporting",
+                  link: "/analytics",
+                  color: "from-orange-500 to-orange-600"
+                }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Link
+                    to={item.link}
+                    className={`block bg-gradient-to-r ${item.color} text-white p-6 rounded-xl hover:shadow-lg transition-all duration-200 group`}
+                  >
+                    <SafeIcon icon={item.icon} className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
+                    <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                    <p className="text-sm opacity-90">{item.description}</p>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Stats Section */}
       <section className="py-16 bg-white">
@@ -149,7 +263,6 @@ const Home = () => {
               Built specifically for dental professionals, our platform offers everything you need to manage referrals efficiently.
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <motion.div
@@ -185,7 +298,6 @@ const Home = () => {
               See what leading dental professionals are saying about our platform.
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <motion.div
@@ -228,13 +340,24 @@ const Home = () => {
             <p className="text-xl mb-8 max-w-2xl mx-auto">
               Join thousands of dental professionals who are already using Link.Refer.Dental to streamline their referral management.
             </p>
-            <Link
-              to="/dashboard"
-              className="bg-white text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-dental-50 transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center space-x-2"
-            >
-              <span>Start Your Free Trial</span>
-              <SafeIcon icon={FiArrowRight} className="w-5 h-5" />
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                to="/dashboard"
+                className="bg-white text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-dental-50 transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center space-x-2"
+              >
+                <SafeIcon icon={FiBarChart3} className="w-5 h-5" />
+                <span>Access Your Dashboard</span>
+                <SafeIcon icon={FiArrowRight} className="w-5 h-5" />
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-white text-primary-600 px-8 py-4 rounded-xl font-semibold hover:bg-dental-50 transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center space-x-2"
+              >
+                <span>Start Your Free Trial</span>
+                <SafeIcon icon={FiArrowRight} className="w-5 h-5" />
+              </Link>
+            )}
           </motion.div>
         </div>
       </section>
