@@ -3,12 +3,16 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import NotificationCenter from './NotificationCenter';
+import { useAuth } from '../context/AuthContext';
 
-const { FiMenu, FiX, FiActivity, FiUsers, FiBarChart3, FiSettings, FiGift, FiRocket } = FiIcons;
+const { FiMenu, FiX, FiActivity, FiUsers, FiBarChart3, FiSettings, FiGift, FiRocket, FiUser, FiLogOut } = FiIcons;
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const navItems = [
     { path: '/', label: 'Home' },
@@ -25,6 +29,7 @@ const Header = () => {
     { path: '/analytics', label: 'Analytics', icon: FiBarChart3 },
     { path: '/rewards', label: 'Rewards', icon: FiGift },
     { path: '/referral-program', label: 'Refer & Earn', icon: FiUsers },
+    { path: '/user-management', label: 'User Management', icon: FiSettings },
   ];
 
   const isDashboard = location.pathname.startsWith('/dashboard') || 
@@ -32,7 +37,13 @@ const Header = () => {
                      location.pathname.startsWith('/network') || 
                      location.pathname.startsWith('/analytics') || 
                      location.pathname.startsWith('/rewards') || 
-                     location.pathname.startsWith('/referral-program');
+                     location.pathname.startsWith('/referral-program') ||
+                     location.pathname.startsWith('/user-management');
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileOpen(false);
+  };
 
   return (
     <motion.header
@@ -87,11 +98,55 @@ const Header = () => {
             )}
           </nav>
 
-          {/* CTA Button */}
+          {/* Right Side Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            {!isDashboard && (
+            {isAuthenticated ? (
+              <>
+                <NotificationCenter />
+                <div className="relative">
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-dental-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                      <SafeIcon icon={FiUser} className="w-4 h-4 text-primary-600" />
+                    </div>
+                  </button>
+
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-dental-200 z-50">
+                      <div className="py-1">
+                        <Link
+                          to="/profile"
+                          className="flex items-center px-4 py-2 text-sm text-dental-700 hover:bg-dental-50"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <SafeIcon icon={FiUser} className="w-4 h-4 mr-2" />
+                          Profile
+                        </Link>
+                        <Link
+                          to="/settings"
+                          className="flex items-center px-4 py-2 text-sm text-dental-700 hover:bg-dental-50"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <SafeIcon icon={FiSettings} className="w-4 h-4 mr-2" />
+                          Settings
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                        >
+                          <SafeIcon icon={FiLogOut} className="w-4 h-4 mr-2" />
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
               <Link
-                to="/dashboard"
+                to="/login"
                 className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Get Started
@@ -132,14 +187,25 @@ const Header = () => {
                   <span className="font-medium">{item.label}</span>
                 </Link>
               ))}
-              {!isDashboard && (
+              
+              {!isAuthenticated && (
                 <Link
-                  to="/dashboard"
+                  to="/login"
                   onClick={() => setIsMenuOpen(false)}
                   className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-2 rounded-lg font-medium text-center mt-4"
                 >
                   Get Started
                 </Link>
+              )}
+
+              {isAuthenticated && (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 mt-4"
+                >
+                  <SafeIcon icon={FiLogOut} className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
               )}
             </div>
           </motion.div>

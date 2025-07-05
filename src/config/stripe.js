@@ -7,31 +7,60 @@ export const stripeConfig = {
   CURRENCY: 'usd',
   PAYMENT_METHODS: ['card'],
   
-  // Subscription plans
+  // Updated subscription plans with new pricing
   PLANS: {
     STARTER: {
       id: 'starter',
       name: 'Starter',
       monthlyPriceId: 'price_starter_monthly',
       yearlyPriceId: 'price_starter_yearly',
-      monthlyPrice: 49,
-      yearlyPrice: 490
+      monthlyPrice: 79,
+      yearlyPrice: 790,
+      referralLimit: 20,
+      features: ['Basic referral management', 'Email support', 'Mobile app access', 'Basic analytics']
     },
     PROFESSIONAL: {
       id: 'professional',
       name: 'Professional',
       monthlyPriceId: 'price_professional_monthly',
       yearlyPriceId: 'price_professional_yearly',
-      monthlyPrice: 99,
-      yearlyPrice: 990
+      monthlyPrice: 199,
+      yearlyPrice: 1990,
+      referralLimit: 100,
+      features: ['Advanced referral management', 'Priority support', 'Advanced analytics', 'Team collaboration', 'Custom workflows']
     },
     ENTERPRISE: {
       id: 'enterprise',
       name: 'Enterprise',
       monthlyPriceId: 'price_enterprise_monthly',
       yearlyPriceId: 'price_enterprise_yearly',
-      monthlyPrice: 199,
-      yearlyPrice: 1990
+      monthlyPrice: 499,
+      yearlyPrice: 4990,
+      referralLimit: -1, // Unlimited
+      features: ['Unlimited referrals', '24/7 phone support', 'Custom integrations', 'Dedicated account manager', 'Advanced reporting']
+    },
+    CELESTIAL: {
+      id: 'celestial',
+      name: 'Celestial',
+      monthlyPriceId: null, // No pricing
+      yearlyPriceId: null,
+      monthlyPrice: 0,
+      yearlyPrice: 0,
+      referralLimit: -1, // Unlimited
+      features: [
+        'Unlimited everything',
+        'Super admin privileges', 
+        'White-label solutions',
+        'Custom development',
+        'Priority feature requests',
+        'Direct developer access',
+        'System configuration access',
+        'Audit log access',
+        'Security management',
+        'Multi-tenant management'
+      ],
+      description: 'Priceless - Reserved for system administrators and key stakeholders',
+      restrictedAccess: true
     }
   }
 };

@@ -1,15 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import ReactECharts from 'echarts-for-react';
+import QuickActions from '../components/QuickActions';
+import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
+import { useNotifications } from '../hooks/useNotifications';
+import { useRole } from '../context/RoleContext';
+import { useAuth } from '../context/AuthContext';
+import { SkeletonCard, LoadingSpinner } from '../components/LoadingStates';
 
-const { FiTrendingUp, FiUsers, FiCalendar, FiActivity, FiArrowUp, FiArrowDown, FiPlus, FiEye, FiMessageSquare } = FiIcons;
+const {
+  FiTrendingUp,
+  FiUsers,
+  FiCalendar,
+  FiActivity,
+  FiArrowUp,
+  FiArrowDown,
+  FiEye,
+  FiRefreshCw,
+  FiCrown,
+  FiShield
+} = FiIcons;
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data: realTimeData, isConnected } = useRealTimeUpdates('dashboard');
+  const { addNotification } = useNotifications();
+  const { isSuperAdmin, subscriptionLevel, getSubscriptionLimits } = useRole();
+  const { user } = useAuth();
 
-  const stats = [
+  const [stats, setStats] = useState([
     {
       title: "Total Referrals",
       value: "247",
@@ -42,9 +64,9 @@ const Dashboard = () => {
       icon: FiCalendar,
       color: "purple"
     }
-  ];
+  ]);
 
-  const recentReferrals = [
+  const [recentReferrals] = useState([
     {
       id: 1,
       patient: "Sarah Johnson",
@@ -72,17 +94,64 @@ const Dashboard = () => {
       date: "2024-01-13",
       priority: "Low"
     }
-  ];
+  ]);
+
+  // Update stats with real-time data
+  useEffect(() => {
+    if (realTimeData?.data) {
+      setStats(prev => prev.map(stat => {
+        if (stat.title === "Total Referrals") {
+          return { ...stat, value: String(parseInt(stat.value) + realTimeData.data.newReferrals) };
+        }
+        if (stat.title === "Active Connections") {
+          return { ...stat, value: String(realTimeData.data.activeUsers) };
+        }
+        return stat;
+      }));
+
+      // Show notification for new referrals
+      if (realTimeData.data.newReferrals > 0) {
+        addNotification({
+          type: 'referral',
+          title: 'New Referrals',
+          message: `${realTimeData.data.newReferrals} new referral(s) received`,
+          autoRemove: true
+        });
+      }
+    }
+  }, [realTimeData, addNotification]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // Simulate refresh
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setIsRefreshing(false);
+    addNotification({
+      type: 'system',
+      title: 'Data Refreshed',
+      message: 'Dashboard data has been updated',
+      autoRemove: true
+    });
+  };
 
   const chartOptions = {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
         type: 'cross'
+      },
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      borderColor: '#e2e8f0',
+      borderWidth: 1,
+      textStyle: {
+        color: '#334155'
       }
     },
     legend: {
-      data: ['Referrals Sent', 'Referrals Received', 'Completed']
+      data: ['Referrals Sent', 'Referrals Received', 'Completed'],
+      textStyle: {
+        color: '#64748b'
+      }
     },
     grid: {
       left: '3%',
@@ -93,18 +162,42 @@ const Dashboard = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
+      data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+      axisLine: {
+        lineStyle: {
+          color: '#e2e8f0'
+        }
+      },
+      axisLabel: {
+        color: '#64748b'
+      }
     },
     yAxis: {
-      type: 'value'
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: '#e2e8f0'
+        }
+      },
+      axisLabel: {
+        color: '#64748b'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#f1f5f9'
+        }
+      }
     },
     series: [
       {
         name: 'Referrals Sent',
         type: 'line',
-        stack: 'Total',
         smooth: true,
         lineStyle: {
+          color: '#0ea5e9',
+          width: 3
+        },
+        itemStyle: {
           color: '#0ea5e9'
         },
         areaStyle: {
@@ -114,11 +207,16 @@ const Dashboard = () => {
             y: 0,
             x2: 0,
             y2: 1,
-            colorStops: [{
-              offset: 0, color: 'rgba(14, 165, 233, 0.3)'
-            }, {
-              offset: 1, color: 'rgba(14, 165, 233, 0.1)'
-            }]
+            colorStops: [
+              {
+                offset: 0,
+                color: 'rgba(14,165,233,0.3)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(14,165,233,0.1)'
+              }
+            ]
           }
         },
         data: [12, 18, 25, 32, 28, 35, 42]
@@ -126,9 +224,12 @@ const Dashboard = () => {
       {
         name: 'Referrals Received',
         type: 'line',
-        stack: 'Total',
         smooth: true,
         lineStyle: {
+          color: '#10b981',
+          width: 3
+        },
+        itemStyle: {
           color: '#10b981'
         },
         areaStyle: {
@@ -138,11 +239,16 @@ const Dashboard = () => {
             y: 0,
             x2: 0,
             y2: 1,
-            colorStops: [{
-              offset: 0, color: 'rgba(16, 185, 129, 0.3)'
-            }, {
-              offset: 1, color: 'rgba(16, 185, 129, 0.1)'
-            }]
+            colorStops: [
+              {
+                offset: 0,
+                color: 'rgba(16,185,129,0.3)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(16,185,129,0.1)'
+              }
+            ]
           }
         },
         data: [8, 15, 22, 28, 25, 31, 38]
@@ -150,9 +256,12 @@ const Dashboard = () => {
       {
         name: 'Completed',
         type: 'line',
-        stack: 'Total',
         smooth: true,
         lineStyle: {
+          color: '#8b5cf6',
+          width: 3
+        },
+        itemStyle: {
           color: '#8b5cf6'
         },
         areaStyle: {
@@ -162,11 +271,16 @@ const Dashboard = () => {
             y: 0,
             x2: 0,
             y2: 1,
-            colorStops: [{
-              offset: 0, color: 'rgba(139, 92, 246, 0.3)'
-            }, {
-              offset: 1, color: 'rgba(139, 92, 246, 0.1)'
-            }]
+            colorStops: [
+              {
+                offset: 0,
+                color: 'rgba(139,92,246,0.3)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(139,92,246,0.1)'
+              }
+            ]
           }
         },
         data: [7, 14, 20, 26, 23, 29, 36]
@@ -176,44 +290,101 @@ const Dashboard = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completed':
-        return 'bg-green-100 text-green-800';
-      case 'In Progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'Completed': return 'bg-green-100 text-green-800';
+      case 'In Progress': return 'bg-blue-100 text-blue-800';
+      case 'Pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'High':
-        return 'bg-red-100 text-red-800';
-      case 'Medium':
-        return 'bg-orange-100 text-orange-800';
-      case 'Low':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'High': return 'bg-red-100 text-red-800';
+      case 'Medium': return 'bg-orange-100 text-orange-800';
+      case 'Low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const subscriptionLimits = getSubscriptionLimits();
 
   return (
     <div className="min-h-screen bg-dental-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <motion.h1
+          <div className="flex items-center justify-between">
+            <div>
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-3xl font-bold text-dental-900 mb-2 flex items-center space-x-3"
+              >
+                <span>Dashboard</span>
+                {isSuperAdmin() && (
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
+                      <SafeIcon icon={FiShield} className="w-4 h-4" />
+                      <span>Super Admin</span>
+                    </div>
+                  </div>
+                )}
+                {subscriptionLevel === 'celestial' && (
+                  <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
+                    <SafeIcon icon={FiCrown} className="w-4 h-4" />
+                    <span>Celestial</span>
+                  </div>
+                )}
+              </motion.h1>
+              <p className="text-dental-600">
+                Welcome back! Here's what's happening with your referrals.
+                {isSuperAdmin() && (
+                  <span className="text-purple-600 font-medium"> You have full system access.</span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {/* Real-time Status */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-sm text-dental-600">
+                  {isConnected ? 'Live' : 'Offline'}
+                </span>
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="flex items-center space-x-2 px-4 py-2 bg-white border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors disabled:opacity-50"
+              >
+                <SafeIcon icon={FiRefreshCw} className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Subscription Limits Display */}
+        {subscriptionLevel !== 'celestial' && (
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold text-dental-900 mb-2"
+            className="bg-white p-4 rounded-xl shadow-lg mb-8 border-l-4 border-primary-500"
           >
-            Dashboard
-          </motion.h1>
-          <p className="text-dental-600">Welcome back! Here's what's happening with your referrals.</p>
-        </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-dental-900 capitalize">{subscriptionLevel} Plan</h3>
+                <p className="text-dental-600 text-sm">
+                  {subscriptionLimits.referrals === -1 ? 'Unlimited' : `${subscriptionLimits.referrals}/month`} referrals •{' '}
+                  {subscriptionLimits.users === -1 ? 'Unlimited' : subscriptionLimits.users} users •{' '}
+                  {subscriptionLimits.features} features
+                </p>
+              </div>
+              <button className="text-primary-600 hover:text-primary-700 font-medium">
+                Upgrade Plan
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -223,7 +394,7 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white p-6 rounded-xl shadow-lg"
+              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -243,15 +414,8 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-center mt-4">
-                <SafeIcon 
-                  icon={stat.trend === 'up' ? FiArrowUp : FiArrowDown} 
-                  className={`w-4 h-4 mr-1 ${
-                    stat.trend === 'up' ? 'text-green-500' : 'text-red-500'
-                  }`} 
-                />
-                <span className={`text-sm font-medium ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <SafeIcon icon={stat.trend === 'up' ? FiArrowUp : FiArrowDown} className={`w-4 h-4 mr-1 ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`} />
+                <span className={`text-sm font-medium ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
                   {stat.change}
                 </span>
                 <span className="text-dental-500 text-sm ml-2">from last month</span>
@@ -282,31 +446,16 @@ const Dashboard = () => {
                 <option value="1y">Last year</option>
               </select>
             </div>
-            <ReactECharts option={chartOptions} style={{ height: '300px' }} />
+            <ReactECharts option={chartOptions} style={{ height: '350px' }} />
           </motion.div>
 
-          {/* Quick Actions */}
+          {/* Enhanced Quick Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-white p-6 rounded-xl shadow-lg"
           >
-            <h2 className="text-xl font-semibold text-dental-900 mb-6">Quick Actions</h2>
-            <div className="space-y-4">
-              <button className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white p-4 rounded-lg font-medium hover:from-primary-600 hover:to-primary-700 transition-all duration-200 flex items-center justify-center space-x-2">
-                <SafeIcon icon={FiPlus} className="w-5 h-5" />
-                <span>New Referral</span>
-              </button>
-              <button className="w-full border-2 border-primary-200 text-primary-600 p-4 rounded-lg font-medium hover:bg-primary-50 transition-all duration-200 flex items-center justify-center space-x-2">
-                <SafeIcon icon={FiUsers} className="w-5 h-5" />
-                <span>Browse Network</span>
-              </button>
-              <button className="w-full border-2 border-dental-200 text-dental-600 p-4 rounded-lg font-medium hover:bg-dental-50 transition-all duration-200 flex items-center justify-center space-x-2">
-                <SafeIcon icon={FiMessageSquare} className="w-5 h-5" />
-                <span>Messages</span>
-              </button>
-            </div>
+            <QuickActions />
           </motion.div>
         </div>
 
@@ -352,7 +501,7 @@ const Dashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-dental-200">
                 {recentReferrals.map((referral) => (
-                  <tr key={referral.id} className="hover:bg-dental-50">
+                  <tr key={referral.id} className="hover:bg-dental-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-dental-900">{referral.patient}</div>
                     </td>
