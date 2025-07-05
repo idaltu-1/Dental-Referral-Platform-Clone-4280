@@ -4,16 +4,34 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useAuth } from '../context/AuthContext';
 
-const { FiUser, FiMail, FiPhone, FiMapPin, FiBuilding, FiEdit, FiSave, FiCamera, FiShield, FiAward, FiCalendar, FiStar, FiTrendingUp, FiUsers, FiFileText } = FiIcons;
+const {
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiBuilding,
+  FiEdit,
+  FiSave,
+  FiCamera,
+  FiShield,
+  FiAward,
+  FiCalendar,
+  FiStar,
+  FiTrendingUp,
+  FiUsers,
+  FiFileText
+} = FiIcons;
 
 const Profile = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSaving, setIsSaving] = useState(false);
   
+  // Initialize with user data if available
   const [profileData, setProfileData] = useState({
-    name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@example.com',
+    name: user?.name || 'Dr. Sarah Johnson',
+    email: user?.email || 'sarah.johnson@example.com',
     phone: '+1 (555) 123-4567',
     practice: 'Elite Dental Care',
     location: 'New York, NY',
@@ -40,6 +58,9 @@ const Profile = () => {
     ]
   });
 
+  // Keep track of original data to detect changes
+  const [originalData, setOriginalData] = useState({ ...profileData });
+
   const stats = [
     { label: 'Referrals Completed', value: '247', icon: FiTrendingUp, color: 'text-green-600' },
     { label: 'Network Connections', value: '89', icon: FiUsers, color: 'text-blue-600' },
@@ -55,14 +76,55 @@ const Profile = () => {
   ];
 
   const handleInputChange = (field, value) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const handleSave = () => {
-    // Save profile data
-    console.log('Saving profile data:', profileData);
+  const handleSave = async () => {
+    setIsSaving(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update original data to reflect saved state
+      setOriginalData({ ...profileData });
+      
+      // Update localStorage if needed
+      if (profileData.name !== originalData.name || profileData.email !== originalData.email) {
+        localStorage.setItem('userProfile', JSON.stringify({
+          name: profileData.name,
+          email: profileData.email,
+          practice: profileData.practice,
+          specialty: profileData.specialty
+        }));
+      }
+      
+      setIsEditing(false);
+      
+      // Show success message
+      const successEvent = new CustomEvent('profileUpdated', {
+        detail: { message: 'Profile updated successfully!' }
+      });
+      window.dispatchEvent(successEvent);
+      
+      // You could also show a toast notification here
+      alert('Profile updated successfully!');
+      
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Error saving profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Reset to original data
+    setProfileData({ ...originalData });
     setIsEditing(false);
-    alert('Profile updated successfully!');
   };
 
   const handleImageUpload = (event) => {
@@ -70,11 +132,17 @@ const Profile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setProfileData(prev => ({ ...prev, avatar: e.target.result }));
+        setProfileData(prev => ({
+          ...prev,
+          avatar: e.target.result
+        }));
       };
       reader.readAsDataURL(file);
     }
   };
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = JSON.stringify(profileData) !== JSON.stringify(originalData);
 
   return (
     <div className="min-h-screen bg-dental-50 py-8">
@@ -90,6 +158,22 @@ const Profile = () => {
           </motion.h1>
           <p className="text-dental-600">Manage your professional information and credentials</p>
         </div>
+
+        {/* Unsaved Changes Warning */}
+        {hasUnsavedChanges && !isEditing && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6"
+          >
+            <div className="flex items-center space-x-2">
+              <SafeIcon icon={FiFileText} className="w-5 h-5 text-yellow-600" />
+              <p className="text-yellow-800">
+                You have unsaved changes. Click "Edit Profile" to continue editing or refresh to discard changes.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Profile Header */}
         <motion.div
@@ -126,13 +210,29 @@ const Profile = () => {
                     type="text"
                     value={profileData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="text-2xl font-bold text-dental-900 bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none"
+                    className="text-2xl font-bold text-dental-900 bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    placeholder="Full Name"
                   />
                   <input
                     type="text"
                     value={profileData.specialty}
                     onChange={(e) => handleInputChange('specialty', e.target.value)}
-                    className="text-primary-600 font-medium bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none"
+                    className="text-primary-600 font-medium bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    placeholder="Specialty"
+                  />
+                  <input
+                    type="text"
+                    value={profileData.practice}
+                    onChange={(e) => handleInputChange('practice', e.target.value)}
+                    className="text-dental-600 bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    placeholder="Practice Name"
+                  />
+                  <input
+                    type="text"
+                    value={profileData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    className="text-dental-500 bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    placeholder="Location"
                   />
                 </div>
               ) : (
@@ -150,17 +250,28 @@ const Profile = () => {
               {isEditing ? (
                 <>
                   <button
-                    onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 border border-dental-200 text-dental-600 rounded-lg hover:bg-dental-50 transition-colors"
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                    className="px-4 py-2 border border-dental-200 text-dental-600 rounded-lg hover:bg-dental-50 transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSave}
-                    className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
+                    disabled={isSaving}
+                    className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 disabled:opacity-50"
                   >
-                    <SafeIcon icon={FiSave} className="w-4 h-4" />
-                    <span>Save</span>
+                    {isSaving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <SafeIcon icon={FiSave} className="w-4 h-4" />
+                        <span>Save Changes</span>
+                      </>
+                    )}
                   </button>
                 </>
               ) : (
@@ -226,6 +337,7 @@ const Profile = () => {
                   onChange={(e) => handleInputChange('bio', e.target.value)}
                   rows={6}
                   className="w-full p-3 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  placeholder="Tell us about your professional background and expertise..."
                 />
               ) : (
                 <p className="text-dental-600">{profileData.bio}</p>
@@ -248,11 +360,13 @@ const Profile = () => {
                       value={profileData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       className="flex-1 p-2 border border-dental-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Email address"
                     />
                   ) : (
                     <span className="text-dental-600">{profileData.email}</span>
                   )}
                 </div>
+                
                 <div className="flex items-center space-x-3">
                   <SafeIcon icon={FiPhone} className="w-5 h-5 text-dental-400" />
                   {isEditing ? (
@@ -261,36 +375,21 @@ const Profile = () => {
                       value={profileData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       className="flex-1 p-2 border border-dental-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Phone number"
                     />
                   ) : (
                     <span className="text-dental-600">{profileData.phone}</span>
                   )}
                 </div>
+                
                 <div className="flex items-center space-x-3">
                   <SafeIcon icon={FiBuilding} className="w-5 h-5 text-dental-400" />
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={profileData.practice}
-                      onChange={(e) => handleInputChange('practice', e.target.value)}
-                      className="flex-1 p-2 border border-dental-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  ) : (
-                    <span className="text-dental-600">{profileData.practice}</span>
-                  )}
+                  <span className="text-dental-600">{profileData.practice}</span>
                 </div>
+                
                 <div className="flex items-center space-x-3">
                   <SafeIcon icon={FiMapPin} className="w-5 h-5 text-dental-400" />
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={profileData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                      className="flex-1 p-2 border border-dental-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  ) : (
-                    <span className="text-dental-600">{profileData.location}</span>
-                  )}
+                  <span className="text-dental-600">{profileData.location}</span>
                 </div>
               </div>
             </motion.div>
@@ -313,11 +412,13 @@ const Profile = () => {
                     value={profileData.licenseNumber}
                     onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
                     className="w-full p-3 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="License number"
                   />
                 ) : (
                   <p className="text-dental-600">{profileData.licenseNumber}</p>
                 )}
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-dental-700 mb-2">Experience</label>
                 {isEditing ? (
@@ -326,11 +427,13 @@ const Profile = () => {
                     value={profileData.experience}
                     onChange={(e) => handleInputChange('experience', e.target.value)}
                     className="w-full p-3 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Years of experience"
                   />
                 ) : (
                   <p className="text-dental-600">{profileData.experience}</p>
                 )}
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-dental-700 mb-2">Education</label>
                 {isEditing ? (
@@ -339,11 +442,13 @@ const Profile = () => {
                     value={profileData.education}
                     onChange={(e) => handleInputChange('education', e.target.value)}
                     className="w-full p-3 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Educational background"
                   />
                 ) : (
                   <p className="text-dental-600">{profileData.education}</p>
                 )}
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-dental-700 mb-2">Website</label>
                 {isEditing ? (
@@ -352,9 +457,15 @@ const Profile = () => {
                     value={profileData.website}
                     onChange={(e) => handleInputChange('website', e.target.value)}
                     className="w-full p-3 border border-dental-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="https://yourpractice.com"
                   />
                 ) : (
-                  <a href={profileData.website} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">
+                  <a
+                    href={profileData.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 hover:underline"
+                  >
                     {profileData.website}
                   </a>
                 )}
@@ -392,7 +503,10 @@ const Profile = () => {
                 <h3 className="text-xl font-semibold text-dental-900 mb-4">Languages</h3>
                 <div className="flex flex-wrap gap-2">
                   {profileData.languages.map((lang, index) => (
-                    <span key={index} className="px-3 py-1 bg-primary-100 text-primary-600 rounded-full text-sm">
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-primary-100 text-primary-600 rounded-full text-sm"
+                    >
                       {lang}
                     </span>
                   ))}
@@ -423,23 +537,40 @@ const Profile = () => {
             <h3 className="text-xl font-semibold text-dental-900 mb-6">Recent Activity</h3>
             <div className="space-y-4">
               {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center space-x-4 p-4 border border-dental-200 rounded-lg">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    activity.type === 'referral' ? 'bg-green-100' :
-                    activity.type === 'profile' ? 'bg-blue-100' :
-                    activity.type === 'review' ? 'bg-yellow-100' : 'bg-purple-100'
-                  }`}>
-                    <SafeIcon 
+                <div
+                  key={index}
+                  className="flex items-center space-x-4 p-4 border border-dental-200 rounded-lg"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      activity.type === 'referral'
+                        ? 'bg-green-100'
+                        : activity.type === 'profile'
+                        ? 'bg-blue-100'
+                        : activity.type === 'review'
+                        ? 'bg-yellow-100'
+                        : 'bg-purple-100'
+                    }`}
+                  >
+                    <SafeIcon
                       icon={
-                        activity.type === 'referral' ? FiTrendingUp :
-                        activity.type === 'profile' ? FiUser :
-                        activity.type === 'review' ? FiStar : FiUsers
-                      } 
+                        activity.type === 'referral'
+                          ? FiTrendingUp
+                          : activity.type === 'profile'
+                          ? FiUser
+                          : activity.type === 'review'
+                          ? FiStar
+                          : FiUsers
+                      }
                       className={`w-5 h-5 ${
-                        activity.type === 'referral' ? 'text-green-600' :
-                        activity.type === 'profile' ? 'text-blue-600' :
-                        activity.type === 'review' ? 'text-yellow-600' : 'text-purple-600'
-                      }`} 
+                        activity.type === 'referral'
+                          ? 'text-green-600'
+                          : activity.type === 'profile'
+                          ? 'text-blue-600'
+                          : activity.type === 'review'
+                          ? 'text-yellow-600'
+                          : 'text-purple-600'
+                      }`}
                     />
                   </div>
                   <div className="flex-1">

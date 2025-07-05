@@ -112,6 +112,7 @@ export const RoleProvider = ({ children }) => {
         // Regular user role detection
         const storedRole = localStorage.getItem('userRole') || 'DENTIST';
         const storedSubscription = localStorage.getItem('subscriptionLevel') || 'starter';
+        
         setUserRole(storedRole);
         setSubscriptionLevel(storedSubscription);
         setPermissions(ROLES[storedRole]?.permissions || []);
@@ -181,10 +182,26 @@ export const RoleProvider = ({ children }) => {
 
   const getSubscriptionLimits = () => {
     const limits = {
-      starter: { referrals: 20, users: 3, features: 'basic' },
-      professional: { referrals: 100, users: 10, features: 'advanced' },
-      enterprise: { referrals: -1, users: 50, features: 'premium' },
-      celestial: { referrals: -1, users: -1, features: 'unlimited' }
+      starter: {
+        referrals: 20,
+        users: 3,
+        features: 'basic'
+      },
+      professional: {
+        referrals: 100,
+        users: 10,
+        features: 'advanced'
+      },
+      enterprise: {
+        referrals: -1,
+        users: 50,
+        features: 'premium'
+      },
+      celestial: {
+        referrals: -1,
+        users: -1,
+        features: 'unlimited'
+      }
     };
 
     return limits[subscriptionLevel] || limits.starter;

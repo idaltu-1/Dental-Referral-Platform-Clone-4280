@@ -14,7 +14,7 @@ const {
   FiTrendingUp,
   FiShield,
   FiZap,
-  FiCrown,
+  FiCreditCard,
   FiInfinity,
   FiLock
 } = FiIcons;
@@ -22,78 +22,68 @@ const {
 const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState('monthly');
 
-  const plans = Object.values(stripeConfig.PLANS).map((plan, index) => ({
-    ...plan,
-    description: index === 0 
-      ? "Perfect for small practices getting started with referral management" 
-      : index === 1 
-      ? "Ideal for growing practices with moderate referral volume" 
-      : index === 2
-      ? "Comprehensive solution for large practices and multi-location groups"
-      : "Exclusive access for system administrators and key stakeholders",
-    features: index === 0 
-      ? [
-          "Up to 20 referrals per month",
-          "Basic network access", 
-          "Email support",
-          "Mobile app access",
-          "Basic analytics",
-          "HIPAA compliant platform"
-        ]
-      : index === 1 
-      ? [
-          "Up to 100 referrals per month",
-          "Full network access",
-          "Priority email support", 
-          "Mobile app access",
-          "Advanced analytics",
-          "HIPAA compliant platform",
-          "Custom workflows",
-          "Team collaboration tools",
-          "Integration support"
-        ]
-      : index === 2
-      ? [
-          "Unlimited referrals",
-          "Premium network access",
-          "24/7 phone & email support",
-          "Mobile app access", 
-          "Advanced analytics & reporting",
-          "HIPAA compliant platform",
-          "Custom workflows",
-          "Team collaboration tools",
-          "Custom integrations",
-          "Dedicated account manager",
-          "Training & onboarding",
-          "API access"
-        ]
-      : plan.features,
-    limitations: index === 0 
-      ? [
-          "Advanced analytics",
-          "Priority support", 
-          "Custom integrations",
-          "Team management"
-        ]
-      : index === 1 
-      ? [
-          "24/7 phone support",
-          "Custom integrations", 
-          "Dedicated account manager"
-        ]
-      : index === 2
-      ? []
-      : [],
-    popular: index === 1,
-    exclusive: index === 3,
-    color: index === 0 
-      ? "gray" 
-      : index === 1 
-      ? "primary" 
-      : index === 2
-      ? "purple"
-      : "celestial"
-  }));
+  // Filter out celestial plan from public pricing
+  const publicPlans = Object.values(stripeConfig.PLANS)
+    .filter(plan => plan.id !== 'celestial')
+    .map((plan, index) => ({
+      ...plan,
+      description: index === 0 
+        ? "Perfect for small practices getting started with referral management"
+        : index === 1 
+        ? "Ideal for growing practices with moderate referral volume"
+        : "Comprehensive solution for large practices and multi-location groups",
+      features: index === 0 
+        ? [
+            "Up to 20 referrals per month",
+            "Basic network access",
+            "Email support",
+            "Mobile app access",
+            "Basic analytics",
+            "HIPAA compliant platform"
+          ]
+        : index === 1 
+        ? [
+            "Up to 100 referrals per month",
+            "Full network access",
+            "Priority email support",
+            "Mobile app access",
+            "Advanced analytics",
+            "HIPAA compliant platform",
+            "Custom workflows",
+            "Team collaboration tools",
+            "Integration support"
+          ]
+        : [
+            "Unlimited referrals",
+            "Premium network access",
+            "24/7 phone & email support",
+            "Mobile app access",
+            "Advanced analytics & reporting",
+            "HIPAA compliant platform",
+            "Custom workflows",
+            "Team collaboration tools",
+            "Custom integrations",
+            "Dedicated account manager",
+            "Training & onboarding",
+            "API access"
+          ],
+      limitations: index === 0 
+        ? [
+            "Advanced analytics",
+            "Priority support",
+            "Custom integrations",
+            "Team management"
+          ]
+        : index === 1 
+        ? [
+            "24/7 phone support",
+            "Custom integrations",
+            "Dedicated account manager"
+          ]
+        : [],
+      popular: index === 1,
+      color: index === 0 ? "gray" : index === 1 ? "primary" : "purple"
+    }));
 
   const faqs = [
     {
@@ -105,30 +95,28 @@ const Pricing = () => {
       answer: "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle."
     },
     {
-      question: "What is the Celestial plan?",
-      answer: "The Celestial plan is our exclusive tier reserved for system administrators and key stakeholders. It includes unlimited access to all features plus administrative privileges. Access is by invitation only."
-    },
-    {
       question: "Is my data secure and HIPAA compliant?",
       answer: "Absolutely. All plans include full HIPAA compliance with end-to-end encryption, secure data storage, and comprehensive audit trails."
     },
     {
       question: "Do you offer custom integrations?",
-      answer: "Custom integrations are available with our Enterprise and Celestial plans. We can integrate with most practice management systems and EHR platforms."
+      answer: "Custom integrations are available with our Enterprise plan. We can integrate with most practice management systems and EHR platforms."
     },
     {
       question: "What payment methods do you accept?",
       answer: "We accept all major credit cards through our secure Stripe payment processing. Enterprise customers can also arrange ACH transfers and invoicing."
+    },
+    {
+      question: "Do you offer enterprise or custom plans?",
+      answer: "Yes! For large practices or enterprise customers with specific needs, we offer custom plans with tailored features and pricing. Contact our sales team to learn more."
     }
   ];
 
   const getPrice = (plan) => {
-    if (plan.id === 'celestial') return 'Priceless';
     return billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
   };
 
   const getSavings = (plan) => {
-    if (plan.id === 'celestial') return 0;
     const monthlyCost = plan.monthlyPrice * 12;
     const yearlyCost = plan.yearlyPrice;
     return monthlyCost - yearlyCost;
@@ -196,16 +184,15 @@ const Pricing = () => {
       {/* Pricing Cards */}
       <section className="px-4 sm:px-6 lg:px-8 mb-20">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {plans.map((plan, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {publicPlans.map((plan, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
                 className={`relative bg-white rounded-2xl shadow-lg ${
-                  plan.popular ? 'ring-2 ring-primary-500 scale-105' : 
-                  plan.exclusive ? 'ring-2 ring-gradient-to-r from-yellow-400 to-yellow-500 scale-105' : ''
+                  plan.popular ? 'ring-2 ring-primary-500 scale-105' : ''
                 } hover:shadow-xl transition-all duration-300`}
               >
                 {plan.popular && (
@@ -217,51 +204,20 @@ const Pricing = () => {
                   </div>
                 )}
 
-                {plan.exclusive && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-1">
-                      <SafeIcon icon={FiCrown} className="w-4 h-4" />
-                      <span>Exclusive</span>
-                    </div>
-                  </div>
-                )}
-
                 <div className="p-8">
                   {/* Plan Header */}
                   <div className="text-center mb-8">
-                    <div className="flex items-center justify-center mb-4">
-                      <h3 className="text-2xl font-bold text-dental-900">{plan.name}</h3>
-                      {plan.id === 'celestial' && (
-                        <SafeIcon icon={FiCrown} className="w-6 h-6 text-yellow-500 ml-2" />
-                      )}
-                    </div>
+                    <h3 className="text-2xl font-bold text-dental-900 mb-2">{plan.name}</h3>
                     <p className="text-dental-600 mb-4">{plan.description}</p>
-                    
-                    {plan.id === 'celestial' ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <SafeIcon icon={FiInfinity} className="w-8 h-8 text-yellow-500" />
-                        <span className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
-                          Priceless
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-baseline justify-center">
-                        <span className="text-4xl font-bold text-dental-900">${getPrice(plan)}</span>
-                        <span className="text-dental-600 ml-2">
-                          /{billingPeriod === 'monthly' ? 'month' : 'year'}
-                        </span>
-                      </div>
-                    )}
-
-                    {billingPeriod === 'yearly' && plan.id !== 'celestial' && getSavings(plan) > 0 && (
+                    <div className="flex items-baseline justify-center">
+                      <span className="text-4xl font-bold text-dental-900">${getPrice(plan)}</span>
+                      <span className="text-dental-600 ml-2">
+                        /{billingPeriod === 'monthly' ? 'month' : 'year'}
+                      </span>
+                    </div>
+                    {billingPeriod === 'yearly' && getSavings(plan) > 0 && (
                       <p className="text-green-600 text-sm mt-2">
                         Save ${getSavings(plan)} per year
-                      </p>
-                    )}
-
-                    {plan.id === 'celestial' && (
-                      <p className="text-yellow-600 text-sm mt-2 font-medium">
-                        By invitation only
                       </p>
                     )}
                   </div>
@@ -283,21 +239,7 @@ const Pricing = () => {
                   </div>
 
                   {/* CTA Button */}
-                  {plan.id === 'celestial' ? (
-                    <button
-                      disabled
-                      className="w-full py-3 px-6 rounded-lg font-medium text-center transition-all duration-200 flex items-center justify-center space-x-2 border-2 border-yellow-200 text-yellow-600 cursor-not-allowed"
-                    >
-                      <SafeIcon icon={FiLock} className="w-5 h-5" />
-                      <span>Invitation Required</span>
-                    </button>
-                  ) : (
-                    <SubscriptionCard 
-                      plan={plan} 
-                      billingPeriod={billingPeriod} 
-                      isPopular={plan.popular} 
-                    />
-                  )}
+                  <SubscriptionCard plan={plan} billingPeriod={billingPeriod} isPopular={plan.popular} />
                 </div>
               </motion.div>
             ))}
@@ -325,7 +267,7 @@ const Pricing = () => {
               },
               {
                 icon: FiTrendingUp,
-                title: "Smart Analytics", 
+                title: "Smart Analytics",
                 description: "Track performance and optimize your referral process"
               },
               {
