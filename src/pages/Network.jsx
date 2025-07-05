@@ -1,131 +1,188 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { DatabaseService } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
-const { FiSearch, FiMapPin, FiStar, FiUser, FiPhone, FiMail, FiFilter, FiUsers, FiAward, FiCalendar } = FiIcons;
+const {
+  FiSearch,
+  FiMapPin,
+  FiStar,
+  FiUser,
+  FiPhone,
+  FiMail,
+  FiFilter,
+  FiUsers,
+  FiAward,
+  FiCalendar,
+  FiUserPlus,
+  FiCheck,
+  FiClock,
+  FiMessageSquare
+} = FiIcons;
 
 const Network = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const [selectedLocation, setSelectedLocation] = useState('All');
+  const [practitioners, setPractitioners] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [connectingIds, setConnectingIds] = useState(new Set());
 
   const specialties = [
-    'All', 'Orthodontics', 'Oral Surgery', 'Periodontics', 'Endodontics', 
-    'Prosthodontics', 'Pediatric Dentistry', 'Oral Pathology'
+    'All',
+    'Orthodontics',
+    'Oral Surgery',
+    'Periodontics',
+    'Endodontics',
+    'Prosthodontics',
+    'Pediatric Dentistry',
+    'Oral Pathology'
   ];
 
   const locations = [
-    'All', 'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia'
+    'All',
+    'New York',
+    'Los Angeles',
+    'Chicago',
+    'Houston',
+    'Phoenix',
+    'Philadelphia'
   ];
 
-  const practitioners = [
-    {
-      id: 1,
-      name: "Dr. Sarah Johnson",
-      specialty: "Orthodontics",
-      practice: "Elite Orthodontics",
-      location: "New York, NY",
-      rating: 4.9,
-      reviews: 127,
-      experience: "15 years",
-      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
-      phone: "+1 (555) 123-4567",
-      email: "sarah.johnson@eliteortho.com",
-      specializations: ["Invisalign", "Braces", "Retainers"],
-      verified: true,
-      responseTime: "< 2 hours"
-    },
-    {
-      id: 2,
-      name: "Dr. Michael Chen",
-      specialty: "Oral Surgery",
-      practice: "Advanced Oral Surgery Center",
-      location: "Los Angeles, CA",
-      rating: 4.8,
-      reviews: 89,
-      experience: "12 years",
-      image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
-      phone: "+1 (555) 987-6543",
-      email: "michael.chen@aosc.com",
-      specializations: ["Implants", "Extractions", "Jaw Surgery"],
-      verified: true,
-      responseTime: "< 4 hours"
-    },
-    {
-      id: 3,
-      name: "Dr. Emily Rodriguez",
-      specialty: "Periodontics",
-      practice: "Gum Health Specialists",
-      location: "Chicago, IL",
-      rating: 4.7,
-      reviews: 156,
-      experience: "18 years",
-      image: "https://images.unsplash.com/photo-1594824947317-d0c8f5c1a2c4?w=150&h=150&fit=crop&crop=face",
-      phone: "+1 (555) 456-7890",
-      email: "emily.rodriguez@gumhealth.com",
-      specializations: ["Gum Disease", "Implants", "Cosmetic Gum Surgery"],
-      verified: true,
-      responseTime: "< 1 hour"
-    },
-    {
-      id: 4,
-      name: "Dr. James Wilson",
-      specialty: "Endodontics",
-      practice: "Root Canal Associates",
-      location: "Houston, TX",
-      rating: 4.6,
-      reviews: 94,
-      experience: "10 years",
-      image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face",
-      phone: "+1 (555) 234-5678",
-      email: "james.wilson@rootcanal.com",
-      specializations: ["Root Canals", "Endodontic Surgery", "Retreatment"],
-      verified: true,
-      responseTime: "< 3 hours"
-    },
-    {
-      id: 5,
-      name: "Dr. Lisa Park",
-      specialty: "Pediatric Dentistry",
-      practice: "Happy Kids Dental",
-      location: "Phoenix, AZ",
-      rating: 4.9,
-      reviews: 203,
-      experience: "14 years",
-      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
-      phone: "+1 (555) 345-6789",
-      email: "lisa.park@happykids.com",
-      specializations: ["Pediatric Care", "Sedation", "Special Needs"],
-      verified: true,
-      responseTime: "< 2 hours"
-    },
-    {
-      id: 6,
-      name: "Dr. Robert Martinez",
-      specialty: "Prosthodontics",
-      practice: "Smile Restoration Center",
-      location: "Philadelphia, PA",
-      rating: 4.8,
-      reviews: 78,
-      experience: "20 years",
-      image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
-      phone: "+1 (555) 567-8901",
-      email: "robert.martinez@smilerest.com",
-      specializations: ["Dentures", "Crowns", "Bridges"],
-      verified: true,
-      responseTime: "< 6 hours"
+  // Mock data for professionals
+  useEffect(() => {
+    loadProfessionals();
+  }, [selectedSpecialty, selectedLocation]);
+
+  const loadProfessionals = async () => {
+    setLoading(true);
+    try {
+      // In a real app, this would call DatabaseService.getNetworkProfessionals()
+      // For now, using mock data
+      const mockProfessionals = [
+        {
+          id: 1,
+          name: "Dr. Sarah Johnson",
+          specialty: "Orthodontics",
+          practice: "Elite Orthodontics",
+          location: "New York, NY",
+          rating: 4.9,
+          reviews: 127,
+          experience: "15 years",
+          image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
+          phone: "+1 (555) 123-4567",
+          email: "sarah.johnson@eliteortho.com",
+          specializations: ["Invisalign", "Braces", "Retainers"],
+          verified: true,
+          responseTime: "< 2 hours",
+          connected: false
+        },
+        {
+          id: 2,
+          name: "Dr. Michael Chen",
+          specialty: "Oral Surgery",
+          practice: "Advanced Oral Surgery Center",
+          location: "Los Angeles, CA",
+          rating: 4.8,
+          reviews: 89,
+          experience: "12 years",
+          image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
+          phone: "+1 (555) 987-6543",
+          email: "michael.chen@aosc.com",
+          specializations: ["Implants", "Extractions", "Jaw Surgery"],
+          verified: true,
+          responseTime: "< 4 hours",
+          connected: false
+        },
+        {
+          id: 3,
+          name: "Dr. Emily Rodriguez",
+          specialty: "Periodontics",
+          practice: "Gum Health Specialists",
+          location: "Chicago, IL",
+          rating: 4.7,
+          reviews: 156,
+          experience: "18 years",
+          image: "https://images.unsplash.com/photo-1594824947317-d0c8f5c1a2c4?w=150&h=150&fit=crop&crop=face",
+          phone: "+1 (555) 456-7890",
+          email: "emily.rodriguez@gumhealth.com",
+          specializations: ["Gum Disease", "Implants", "Cosmetic Gum Surgery"],
+          verified: true,
+          responseTime: "< 1 hour",
+          connected: true
+        },
+        // Add more mock professionals as needed
+      ];
+
+      // Filter based on selections
+      let filtered = mockProfessionals;
+      if (selectedSpecialty !== 'All') {
+        filtered = filtered.filter(p => p.specialty === selectedSpecialty);
+      }
+      if (selectedLocation !== 'All') {
+        filtered = filtered.filter(p => p.location.includes(selectedLocation));
+      }
+
+      setPractitioners(filtered);
+    } catch (error) {
+      console.error('Error loading professionals:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleConnect = async (practitionerId) => {
+    if (!user?.userId) {
+      alert('Please log in to connect with professionals');
+      return;
+    }
+
+    setConnectingIds(prev => new Set([...prev, practitionerId]));
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In a real app, this would call DatabaseService.connectProfessional()
+      // await DatabaseService.connectProfessional(user.userId, practitionerId);
+      
+      setPractitioners(prev => prev.map(p => 
+        p.id === practitionerId ? { ...p, connected: true } : p
+      ));
+      
+      alert('Connection request sent successfully!');
+    } catch (error) {
+      console.error('Error connecting with professional:', error);
+      alert('Failed to send connection request. Please try again.');
+    } finally {
+      setConnectingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(practitionerId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleMessage = (practitioner) => {
+    alert(`Opening message thread with ${practitioner.name}`);
+  };
+
+  const handleCall = (phone) => {
+    window.open(`tel:${phone}`);
+  };
+
+  const handleEmail = (email) => {
+    window.open(`mailto:${email}`);
+  };
 
   const filteredPractitioners = practitioners.filter(practitioner => {
     const matchesSearch = practitioner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          practitioner.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          practitioner.practice.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSpecialty = selectedSpecialty === 'All' || practitioner.specialty === selectedSpecialty;
-    const matchesLocation = selectedLocation === 'All' || practitioner.location.includes(selectedLocation);
-    
-    return matchesSearch && matchesSpecialty && matchesLocation;
+    return matchesSearch;
   });
 
   return (
@@ -200,6 +257,13 @@ const Network = () => {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+          </div>
+        )}
+
         {/* Practitioners Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPractitioners.map((practitioner, index) => (
@@ -254,7 +318,7 @@ const Network = () => {
                     {practitioner.experience} experience
                   </div>
                   <div className="flex items-center text-dental-600 text-sm">
-                    <SafeIcon icon={FiUsers} className="w-4 h-4 mr-2" />
+                    <SafeIcon icon={FiClock} className="w-4 h-4 mr-2" />
                     Response time: {practitioner.responseTime}
                   </div>
                 </div>
@@ -275,15 +339,50 @@ const Network = () => {
 
                 {/* Contact Actions */}
                 <div className="flex space-x-2">
-                  <button className="flex-1 bg-gradient-to-r from-primary-500 to-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:from-primary-600 hover:to-primary-700 transition-all duration-200 flex items-center justify-center space-x-2">
-                    <SafeIcon icon={FiUser} className="w-4 h-4" />
-                    <span>Connect</span>
-                  </button>
-                  <button className="p-2 border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors">
+                  {practitioner.connected ? (
+                    <div className="flex-1 flex items-center justify-center py-2 px-4 bg-green-100 text-green-700 rounded-lg font-medium">
+                      <SafeIcon icon={FiCheck} className="w-4 h-4 mr-2" />
+                      Connected
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleConnect(practitioner.id)}
+                      disabled={connectingIds.has(practitioner.id)}
+                      className="flex-1 bg-gradient-to-r from-primary-500 to-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:from-primary-600 hover:to-primary-700 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {connectingIds.has(practitioner.id) ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Connecting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <SafeIcon icon={FiUserPlus} className="w-4 h-4" />
+                          <span>Connect</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => handleCall(practitioner.phone)}
+                    className="p-2 border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors"
+                  >
                     <SafeIcon icon={FiPhone} className="w-4 h-4 text-dental-600" />
                   </button>
-                  <button className="p-2 border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors">
+                  
+                  <button
+                    onClick={() => handleEmail(practitioner.email)}
+                    className="p-2 border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors"
+                  >
                     <SafeIcon icon={FiMail} className="w-4 h-4 text-dental-600" />
+                  </button>
+                  
+                  <button
+                    onClick={() => handleMessage(practitioner)}
+                    className="p-2 border border-dental-200 rounded-lg hover:bg-dental-50 transition-colors"
+                  >
+                    <SafeIcon icon={FiMessageSquare} className="w-4 h-4 text-dental-600" />
                   </button>
                 </div>
               </div>
@@ -292,7 +391,7 @@ const Network = () => {
         </div>
 
         {/* No Results */}
-        {filteredPractitioners.length === 0 && (
+        {!loading && filteredPractitioners.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

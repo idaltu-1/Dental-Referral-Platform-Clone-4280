@@ -11,11 +11,11 @@ export const useRole = () => {
   return context;
 };
 
-// Define comprehensive roles with hierarchical permissions
+// Updated comprehensive role system based on dental practice hierarchy
 const ROLES = {
   SUPER_ADMIN: {
     name: 'Super Admin',
-    level: 5,
+    level: 7,
     permissions: [
       // All permissions - complete system control
       'manage_users',
@@ -32,40 +32,54 @@ const ROLES = {
       'system_configuration',
       'audit_logs',
       'security_management',
-      'super_admin_panel'
+      'super_admin_panel',
+      'database_access',
+      'user_management'
     ]
   },
-  ADMIN: {
-    name: 'Admin',
-    level: 4,
+  DEVELOPER: {
+    name: 'Developer',
+    level: 6,
+    permissions: [
+      'manage_system',
+      'system_configuration',
+      'manage_integrations',
+      'audit_logs',
+      'view_analytics',
+      'manage_network',
+      'access_all_data'
+    ]
+  },
+  SPECIALIST_ADMIN: {
+    name: 'Specialist Admin',
+    level: 5,
     permissions: [
       'manage_users',
       'manage_roles',
       'view_analytics',
-      'manage_system',
-      'access_all_data',
       'manage_referrals',
       'manage_network',
       'manage_rewards',
-      'manage_billing'
+      'manage_practice_settings',
+      'manage_practice_billing',
+      'user_management'
     ]
   },
-  PRACTICE_OWNER: {
-    name: 'Practice Owner',
-    level: 3,
+  DENTIST_ADMIN: {
+    name: 'Dentist Admin',
+    level: 4,
     permissions: [
       'manage_practice_users',
       'view_practice_analytics',
       'manage_practice_referrals',
       'manage_practice_network',
-      'view_practice_rewards',
       'manage_practice_settings',
       'manage_practice_billing'
     ]
   },
-  DENTIST: {
-    name: 'Dentist',
-    level: 2,
+  DENTAL_SPECIALIST: {
+    name: 'Dental Specialist',
+    level: 3,
     permissions: [
       'create_referrals',
       'view_referrals',
@@ -73,18 +87,30 @@ const ROLES = {
       'view_network',
       'view_analytics',
       'manage_profile',
+      'view_rewards',
+      'specialist_features'
+    ]
+  },
+  REFERRING_DENTIST: {
+    name: 'Referring Dentist',
+    level: 2,
+    permissions: [
+      'create_referrals',
+      'view_own_referrals',
+      'manage_own_referrals',
+      'view_network',
+      'basic_analytics',
+      'manage_profile',
       'view_rewards'
     ]
   },
-  STAFF: {
-    name: 'Staff',
+  PATIENT: {
+    name: 'Patient',
     level: 1,
     permissions: [
-      'view_referrals',
-      'create_referrals',
-      'manage_appointments',
-      'view_network',
-      'manage_profile'
+      'view_own_referrals',
+      'view_own_profile',
+      'update_own_profile'
     ]
   }
 };
@@ -94,7 +120,7 @@ const SUPER_ADMIN_EMAIL = 'wgray@stloralsurgery.com';
 
 export const RoleProvider = ({ children }) => {
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState('DENTIST');
+  const [userRole, setUserRole] = useState('REFERRING_DENTIST');
   const [permissions, setPermissions] = useState([]);
   const [subscriptionLevel, setSubscriptionLevel] = useState('starter');
   const [loading, setLoading] = useState(true);
@@ -110,7 +136,7 @@ export const RoleProvider = ({ children }) => {
         localStorage.setItem('subscriptionLevel', 'celestial');
       } else {
         // Regular user role detection
-        const storedRole = localStorage.getItem('userRole') || 'DENTIST';
+        const storedRole = localStorage.getItem('userRole') || 'REFERRING_DENTIST';
         const storedSubscription = localStorage.getItem('subscriptionLevel') || 'starter';
         
         setUserRole(storedRole);
@@ -145,7 +171,7 @@ export const RoleProvider = ({ children }) => {
 
     // Define section-specific permissions
     const sectionPermissions = {
-      'user-management': 'manage_users',
+      'user-management': 'user_management',
       'billing': 'manage_billing',
       'analytics': 'view_analytics',
       'system': 'manage_system',

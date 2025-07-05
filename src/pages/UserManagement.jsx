@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-import RoleGuard from '../components/RoleGuard';
 import RoleSelector from '../components/RoleSelector';
 import UserForm from '../components/UserForm';
 import { useRole } from '../context/RoleContext';
 import { useAuth } from '../context/AuthContext';
+import { DatabaseService } from '../lib/supabase';
 
 const {
   FiUsers,
@@ -36,104 +36,129 @@ const UserManagement = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Enhanced users with super admin account
-  const users = [
-    {
-      id: 'super-admin-001',
-      name: 'Dr. William Gray',
-      email: 'wgray@stloralsurgery.com',
-      phone: '+1 (555) 123-4567',
-      role: 'SUPER_ADMIN',
-      status: 'Active',
-      practice: 'St. Louis Oral Surgery',
-      location: 'St. Louis, MO',
-      joinDate: '2022-01-01',
-      lastLogin: '2024-01-20',
-      avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face',
-      subscriptionLevel: 'celestial',
-      specialPermissions: ['system_owner', 'billing_admin', 'security_admin']
-    },
-    {
-      id: 2,
-      name: 'Dr. Sarah Johnson',
-      email: 'sarah.johnson@example.com',
-      phone: '+1 (555) 123-4567',
-      role: 'PRACTICE_OWNER',
-      status: 'Active',
-      practice: 'Elite Dental Care',
-      location: 'New York, NY',
-      joinDate: '2023-01-15',
-      lastLogin: '2024-01-20',
-      avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face',
-      subscriptionLevel: 'professional'
-    },
-    {
-      id: 3,
-      name: 'Dr. Michael Chen',
-      email: 'michael.chen@example.com',
-      phone: '+1 (555) 987-6543',
-      role: 'DENTIST',
-      status: 'Active',
-      practice: 'Smile Specialists',
-      location: 'Los Angeles, CA',
-      joinDate: '2023-02-20',
-      lastLogin: '2024-01-19',
-      avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face',
-      subscriptionLevel: 'starter'
-    },
-    {
-      id: 4,
-      name: 'Jennifer Martinez',
-      email: 'jennifer.martinez@example.com',
-      phone: '+1 (555) 456-7890',
-      role: 'STAFF',
-      status: 'Active',
-      practice: 'Elite Dental Care',
-      location: 'New York, NY',
-      joinDate: '2023-03-10',
-      lastLogin: '2024-01-18',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b332c3a2?w=150&h=150&fit=crop&crop=face',
-      subscriptionLevel: 'starter'
-    },
-    {
-      id: 5,
-      name: 'Dr. Robert Wilson',
-      email: 'robert.wilson@example.com',
-      phone: '+1 (555) 234-5678',
-      role: 'DENTIST',
-      status: 'Inactive',
-      practice: 'Family Dental',
-      location: 'Chicago, IL',
-      joinDate: '2023-04-05',
-      lastLogin: '2024-01-10',
-      avatar: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face',
-      subscriptionLevel: 'enterprise'
-    },
-    {
-      id: 6,
-      name: 'Dr. Emily Rodriguez',
-      email: 'emily.rodriguez@example.com',
-      phone: '+1 (555) 345-6789',
-      role: 'ADMIN',
-      status: 'Active',
-      practice: 'System Admin',
-      location: 'Remote',
-      joinDate: '2022-12-01',
-      lastLogin: '2024-01-20',
-      avatar: 'https://images.unsplash.com/photo-1594824947317-d0c8f5c1a2c4?w=150&h=150&fit=crop&crop=face',
-      subscriptionLevel: 'enterprise'
+  // Load users on component mount
+  useEffect(() => {
+    loadUsers();
+  }, [selectedRole, selectedStatus]);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      // In a real app, this would call DatabaseService.getUsers()
+      // For now, using enhanced mock data
+      const mockUsers = [
+        {
+          id: 'super-admin-001',
+          name: 'Dr. William Gray',
+          email: 'wgray@stloralsurgery.com',
+          phone: '+1 (555) 123-4567',
+          role: 'SUPER_ADMIN',
+          status: 'Active',
+          practice: 'St. Louis Oral Surgery',
+          location: 'St. Louis, MO',
+          joinDate: '2022-01-01',
+          lastLogin: '2024-01-20',
+          avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face',
+          subscriptionLevel: 'celestial',
+          specialPermissions: ['system_owner', 'billing_admin', 'security_admin']
+        },
+        {
+          id: 2,
+          name: 'Dr. Sarah Johnson',
+          email: 'sarah.johnson@example.com',
+          phone: '+1 (555) 123-4567',
+          role: 'DENTIST_ADMIN',
+          status: 'Active',
+          practice: 'Elite Dental Care',
+          location: 'New York, NY',
+          joinDate: '2023-01-15',
+          lastLogin: '2024-01-20',
+          avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face',
+          subscriptionLevel: 'professional'
+        },
+        {
+          id: 3,
+          name: 'Dr. Michael Chen',
+          email: 'michael.chen@example.com',
+          phone: '+1 (555) 987-6543',
+          role: 'DENTAL_SPECIALIST',
+          status: 'Active',
+          practice: 'Smile Specialists',
+          location: 'Los Angeles, CA',
+          joinDate: '2023-02-20',
+          lastLogin: '2024-01-19',
+          avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face',
+          subscriptionLevel: 'starter'
+        },
+        {
+          id: 4,
+          name: 'Jennifer Martinez',
+          email: 'jennifer.martinez@example.com',
+          phone: '+1 (555) 456-7890',
+          role: 'REFERRING_DENTIST',
+          status: 'Active',
+          practice: 'Elite Dental Care',
+          location: 'New York, NY',
+          joinDate: '2023-03-10',
+          lastLogin: '2024-01-18',
+          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b332c3a2?w=150&h=150&fit=crop&crop=face',
+          subscriptionLevel: 'starter'
+        },
+        {
+          id: 5,
+          name: 'Dr. Robert Wilson',
+          email: 'robert.wilson@example.com',
+          phone: '+1 (555) 234-5678',
+          role: 'REFERRING_DENTIST',
+          status: 'Inactive',
+          practice: 'Family Dental',
+          location: 'Chicago, IL',
+          joinDate: '2023-04-05',
+          lastLogin: '2024-01-10',
+          avatar: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face',
+          subscriptionLevel: 'enterprise'
+        },
+        {
+          id: 6,
+          name: 'Dr. Emily Rodriguez',
+          email: 'emily.rodriguez@example.com',
+          phone: '+1 (555) 345-6789',
+          role: 'SPECIALIST_ADMIN',
+          status: 'Active',
+          practice: 'Advanced Dental Specialists',
+          location: 'Remote',
+          joinDate: '2022-12-01',
+          lastLogin: '2024-01-20',
+          avatar: 'https://images.unsplash.com/photo-1594824947317-d0c8f5c1a2c4?w=150&h=150&fit=crop&crop=face',
+          subscriptionLevel: 'enterprise'
+        }
+      ];
+
+      // Filter based on selections
+      let filtered = mockUsers;
+      if (selectedRole !== 'All') {
+        filtered = filtered.filter(u => u.role === selectedRole);
+      }
+      if (selectedStatus !== 'All') {
+        filtered = filtered.filter(u => u.status === selectedStatus);
+      }
+
+      setUsers(filtered);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.practice.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'All' || user.role === selectedRole;
-    const matchesStatus = selectedStatus === 'All' || user.status === selectedStatus;
-    
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch;
   });
 
   const getStatusColor = (status) => {
@@ -148,10 +173,12 @@ const UserManagement = () => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'SUPER_ADMIN': return 'bg-purple-100 text-purple-800';
-      case 'ADMIN': return 'bg-blue-100 text-blue-800';
-      case 'PRACTICE_OWNER': return 'bg-indigo-100 text-indigo-800';
-      case 'DENTIST': return 'bg-green-100 text-green-800';
-      case 'STAFF': return 'bg-orange-100 text-orange-800';
+      case 'DEVELOPER': return 'bg-gray-100 text-gray-800';
+      case 'SPECIALIST_ADMIN': return 'bg-blue-100 text-blue-800';
+      case 'DENTIST_ADMIN': return 'bg-indigo-100 text-indigo-800';
+      case 'DENTAL_SPECIALIST': return 'bg-green-100 text-green-800';
+      case 'REFERRING_DENTIST': return 'bg-orange-100 text-orange-800';
+      case 'PATIENT': return 'bg-pink-100 text-pink-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -194,7 +221,7 @@ const UserManagement = () => {
     setShowAddModal(true);
   };
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     const userToDelete = users.find(u => u.id === userId);
     
     // Prevent deletion of super admin
@@ -204,12 +231,17 @@ const UserManagement = () => {
     }
 
     if (window.confirm('Are you sure you want to delete this user?')) {
-      console.log('Deleting user:', userId);
-      alert('User deleted successfully');
+      try {
+        // In real app: await DatabaseService.deleteUser(userId);
+        setUsers(prev => prev.filter(u => u.id !== userId));
+        alert('User deleted successfully');
+      } catch (error) {
+        alert('Error deleting user');
+      }
     }
   };
 
-  const handleToggleStatus = (userId) => {
+  const handleToggleStatus = async (userId) => {
     const userToToggle = users.find(u => u.id === userId);
     
     // Prevent status change of super admin
@@ -218,15 +250,23 @@ const UserManagement = () => {
       return;
     }
 
-    console.log('Toggling status for user:', userId);
-    alert('User status updated');
+    try {
+      const newStatus = userToToggle.status === 'Active' ? 'Inactive' : 'Active';
+      // In real app: await DatabaseService.updateUser(userId, { status: newStatus });
+      setUsers(prev => prev.map(u => 
+        u.id === userId ? { ...u, status: newStatus } : u
+      ));
+      alert('User status updated');
+    } catch (error) {
+      alert('Error updating user status');
+    }
   };
 
-  const handleRoleChange = (userId, newRole) => {
+  const handleRoleChange = async (userId, newRole) => {
     const userToUpdate = users.find(u => u.id === userId);
     
     // Only super admin can assign certain roles
-    if (!isSuperAdmin() && (newRole === 'SUPER_ADMIN' || newRole === 'ADMIN')) {
+    if (!isSuperAdmin() && ['SUPER_ADMIN', 'DEVELOPER', 'SPECIALIST_ADMIN'].includes(newRole)) {
       alert('Insufficient privileges to assign this role');
       return;
     }
@@ -237,22 +277,47 @@ const UserManagement = () => {
       return;
     }
 
-    console.log('Changing role for user:', userId, 'to:', newRole);
-    alert('Role updated successfully');
-  };
-
-  const handleUserSubmit = (formData) => {
-    if (selectedUser) {
-      console.log('Updating user:', selectedUser.id, formData);
-    } else {
-      console.log('Creating new user:', formData);
+    try {
+      // In real app: await DatabaseService.updateUser(userId, { role: newRole });
+      setUsers(prev => prev.map(u => 
+        u.id === userId ? { ...u, role: newRole } : u
+      ));
+      alert('Role updated successfully');
+    } catch (error) {
+      alert('Error updating role');
     }
-    setShowAddModal(false);
-    setSelectedUser(null);
   };
 
-  // Show access denied if user doesn't have permission
-  if (!canEditSection('user-management') && !isSuperAdmin()) {
+  const handleUserSubmit = async (formData) => {
+    try {
+      if (selectedUser) {
+        // Update existing user
+        setUsers(prev => prev.map(u => 
+          u.id === selectedUser.id ? { ...u, ...formData } : u
+        ));
+      } else {
+        // Create new user
+        const newUser = {
+          id: Date.now(),
+          ...formData,
+          joinDate: new Date().toISOString().split('T')[0],
+          lastLogin: 'Never',
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+          subscriptionLevel: 'starter'
+        };
+        setUsers(prev => [newUser, ...prev]);
+      }
+      
+      setShowAddModal(false);
+      setSelectedUser(null);
+      alert(`User ${selectedUser ? 'updated' : 'created'} successfully!`);
+    } catch (error) {
+      alert('Error saving user');
+    }
+  };
+
+  // Check if user has permission to access user management
+  if (!isSuperAdmin() && !canEditSection('user-management')) {
     return (
       <div className="min-h-screen bg-dental-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -287,10 +352,10 @@ const UserManagement = () => {
             )}
           </motion.h1>
           <p className="text-dental-600">
-            Manage users, roles, and permissions
+            Manage users, roles, and permissions across the platform
             {isSuperAdmin() && (
               <span className="text-purple-600 font-medium">
-                {' '}• Full administrative control
+                {' '}• Full administrative control enabled
               </span>
             )}
           </p>
@@ -357,15 +422,13 @@ const UserManagement = () => {
                 <SafeIcon icon={FiUpload} className="w-4 h-4" />
                 <span>Import</span>
               </button>
-              {(canEditSection('user-management') || isSuperAdmin()) && (
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-primary-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-600 transition-colors flex items-center space-x-2"
-                >
-                  <SafeIcon icon={FiUserPlus} className="w-4 h-4" />
-                  <span>Add User</span>
-                </button>
-              )}
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-primary-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-600 transition-colors flex items-center space-x-2"
+              >
+                <SafeIcon icon={FiUserPlus} className="w-4 h-4" />
+                <span>Add User</span>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -435,9 +498,9 @@ const UserManagement = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-dental-600 text-sm font-medium">Celestial Users</p>
+                <p className="text-dental-600 text-sm font-medium">Specialists</p>
                 <p className="text-2xl font-bold text-dental-900">
-                  {users.filter(u => u.subscriptionLevel === 'celestial').length}
+                  {users.filter(u => u.role === 'DENTAL_SPECIALIST').length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -461,98 +524,103 @@ const UserManagement = () => {
               </h2>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-dental-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
-                    Subscription
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
-                    Practice
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
-                    Last Login
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-dental-200">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-dental-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div className="ml-4">
-                          <div className="flex items-center space-x-2">
-                            <div className="text-sm font-medium text-dental-900">
-                              {user.name}
+          
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-dental-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Subscription
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Practice
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Last Login
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-dental-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-dental-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-dental-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div className="ml-4">
+                            <div className="flex items-center space-x-2">
+                              <div className="text-sm font-medium text-dental-900">
+                                {user.name}
+                              </div>
+                              {user.role === 'SUPER_ADMIN' && (
+                                <SafeIcon icon={FiCrown} className="w-4 h-4 text-yellow-500" />
+                              )}
                             </div>
-                            {user.role === 'SUPER_ADMIN' && (
-                              <SafeIcon icon={FiCrown} className="w-4 h-4 text-yellow-500" />
-                            )}
-                          </div>
-                          <div className="text-sm text-dental-500">
-                            {user.email}
+                            <div className="text-sm text-dental-500">
+                              {user.email}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {(canEditSection('user-management') || isSuperAdmin()) && user.role !== 'SUPER_ADMIN' ? (
-                        <RoleSelector
-                          userId={user.id}
-                          currentRole={user.role}
-                          onRoleChange={handleRoleChange}
-                        />
-                      ) : (
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
-                          {roles[user.role]?.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isSuperAdmin() && user.role !== 'SUPER_ADMIN' ? (
+                          <RoleSelector
+                            userId={user.id}
+                            currentRole={user.role}
+                            onRoleChange={handleRoleChange}
+                          />
+                        ) : (
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
+                            {roles[user.role]?.name || user.role}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
+                          {user.status}
                         </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getSubscriptionBadge(user.subscriptionLevel)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-dental-900">{user.practice}</div>
-                      <div className="text-sm text-dental-500">{user.location}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-dental-500">
-                      {user.lastLogin}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="relative">
-                        <button
-                          onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
-                          className="text-dental-400 hover:text-dental-600"
-                        >
-                          <SafeIcon icon={FiMoreVertical} className="w-5 h-5" />
-                        </button>
-                        {showActionMenu === user.id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-dental-200 z-10">
-                            <div className="py-1">
-                              {(canEditSection('user-management') || isSuperAdmin()) && (
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getSubscriptionBadge(user.subscriptionLevel)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-dental-900">{user.practice}</div>
+                        <div className="text-sm text-dental-500">{user.location}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-dental-500">
+                        {user.lastLogin}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
+                            className="text-dental-400 hover:text-dental-600"
+                          >
+                            <SafeIcon icon={FiMoreVertical} className="w-5 h-5" />
+                          </button>
+                          {showActionMenu === user.id && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-dental-200 z-10">
+                              <div className="py-1">
                                 <button
                                   onClick={() => handleEditUser(user)}
                                   className="flex items-center px-4 py-2 text-sm text-dental-700 hover:bg-dental-50 w-full"
@@ -560,38 +628,38 @@ const UserManagement = () => {
                                   <SafeIcon icon={FiEdit} className="w-4 h-4 mr-2" />
                                   Edit User
                                 </button>
-                              )}
-                              {(canEditSection('user-management') || isSuperAdmin()) && user.role !== 'SUPER_ADMIN' && (
-                                <>
-                                  <button
-                                    onClick={() => handleToggleStatus(user.id)}
-                                    className="flex items-center px-4 py-2 text-sm text-dental-700 hover:bg-dental-50 w-full"
-                                  >
-                                    <SafeIcon
-                                      icon={user.status === 'Active' ? FiUserX : FiUserCheck}
-                                      className="w-4 h-4 mr-2"
-                                    />
-                                    {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteUser(user.id)}
-                                    className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full"
-                                  >
-                                    <SafeIcon icon={FiTrash2} className="w-4 h-4 mr-2" />
-                                    Delete User
-                                  </button>
-                                </>
-                              )}
+                                {user.role !== 'SUPER_ADMIN' && (
+                                  <>
+                                    <button
+                                      onClick={() => handleToggleStatus(user.id)}
+                                      className="flex items-center px-4 py-2 text-sm text-dental-700 hover:bg-dental-50 w-full"
+                                    >
+                                      <SafeIcon
+                                        icon={user.status === 'Active' ? FiUserX : FiUserCheck}
+                                        className="w-4 h-4 mr-2"
+                                      />
+                                      {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteUser(user.id)}
+                                      className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full"
+                                    >
+                                      <SafeIcon icon={FiTrash2} className="w-4 h-4 mr-2" />
+                                      Delete User
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </motion.div>
 
         {/* Add/Edit User Modal */}

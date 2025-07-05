@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useAuth } from '../context/AuthContext';
+import { DatabaseService } from '../lib/supabase';
 
 const {
   FiUser,
@@ -19,7 +20,9 @@ const {
   FiStar,
   FiTrendingUp,
   FiUsers,
-  FiFileText
+  FiFileText,
+  FiCheck,
+  FiX
 } = FiIcons;
 
 const Profile = () => {
@@ -27,6 +30,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
   
   // Initialize with user data if available
   const [profileData, setProfileData] = useState({
@@ -61,6 +65,26 @@ const Profile = () => {
   // Keep track of original data to detect changes
   const [originalData, setOriginalData] = useState({ ...profileData });
 
+  // Load profile data on component mount
+  useEffect(() => {
+    loadProfile();
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user?.userId) return;
+    
+    try {
+      const savedProfile = await DatabaseService.getProfile(user.userId);
+      if (savedProfile) {
+        const mergedData = { ...profileData, ...savedProfile };
+        setProfileData(mergedData);
+        setOriginalData(mergedData);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
+
   const stats = [
     { label: 'Referrals Completed', value: '247', icon: FiTrendingUp, color: 'text-green-600' },
     { label: 'Network Connections', value: '89', icon: FiUsers, color: 'text-blue-600' },
@@ -84,38 +108,30 @@ const Profile = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveStatus(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to database
+      if (user?.userId) {
+        await DatabaseService.saveProfile(user.userId, profileData);
+      }
+      
+      // Update localStorage as backup
+      localStorage.setItem('userProfile', JSON.stringify(profileData));
       
       // Update original data to reflect saved state
       setOriginalData({ ...profileData });
       
-      // Update localStorage if needed
-      if (profileData.name !== originalData.name || profileData.email !== originalData.email) {
-        localStorage.setItem('userProfile', JSON.stringify({
-          name: profileData.name,
-          email: profileData.email,
-          practice: profileData.practice,
-          specialty: profileData.specialty
-        }));
-      }
-      
       setIsEditing(false);
+      setSaveStatus('success');
       
-      // Show success message
-      const successEvent = new CustomEvent('profileUpdated', {
-        detail: { message: 'Profile updated successfully!' }
-      });
-      window.dispatchEvent(successEvent);
-      
-      // You could also show a toast notification here
-      alert('Profile updated successfully!');
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveStatus(null), 3000);
       
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Error saving profile. Please try again.');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(null), 3000);
     } finally {
       setIsSaving(false);
     }
@@ -125,6 +141,7 @@ const Profile = () => {
     // Reset to original data
     setProfileData({ ...originalData });
     setIsEditing(false);
+    setSaveStatus(null);
   };
 
   const handleImageUpload = (event) => {
@@ -158,6 +175,31 @@ const Profile = () => {
           </motion.h1>
           <p className="text-dental-600">Manage your professional information and credentials</p>
         </div>
+
+        {/* Save Status Messages */}
+        {saveStatus && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mb-6 p-4 rounded-lg border ${
+              saveStatus === 'success' 
+                ? 'bg-green-50 border-green-200 text-green-800' 
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              <SafeIcon 
+                icon={saveStatus === 'success' ? FiCheck : FiX} 
+                className={`w-5 h-5 ${saveStatus === 'success' ? 'text-green-600' : 'text-red-600'}`} 
+              />
+              <p>
+                {saveStatus === 'success' 
+                  ? 'Profile saved successfully!' 
+                  : 'Failed to save profile. Please try again.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Unsaved Changes Warning */}
         {hasUnsavedChanges && !isEditing && (
@@ -210,28 +252,28 @@ const Profile = () => {
                     type="text"
                     value={profileData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="text-2xl font-bold text-dental-900 bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    className="text-2xl font-bold text-dental-900 bg-white border border-dental-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full"
                     placeholder="Full Name"
                   />
                   <input
                     type="text"
                     value={profileData.specialty}
                     onChange={(e) => handleInputChange('specialty', e.target.value)}
-                    className="text-primary-600 font-medium bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    className="text-primary-600 font-medium bg-white border border-dental-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full"
                     placeholder="Specialty"
                   />
                   <input
                     type="text"
                     value={profileData.practice}
                     onChange={(e) => handleInputChange('practice', e.target.value)}
-                    className="text-dental-600 bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    className="text-dental-600 bg-white border border-dental-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full"
                     placeholder="Practice Name"
                   />
                   <input
                     type="text"
                     value={profileData.location}
                     onChange={(e) => handleInputChange('location', e.target.value)}
-                    className="text-dental-500 bg-transparent border-b border-dental-200 focus:border-primary-500 outline-none w-full"
+                    className="text-dental-500 bg-white border border-dental-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full"
                     placeholder="Location"
                   />
                 </div>

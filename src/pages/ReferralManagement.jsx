@@ -1,17 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import ReferralForm from '../components/ReferralForm';
 import ReferralCard from '../components/ReferralCard';
-import { useReferrals } from '../hooks/useReferrals';
+import { DatabaseService } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
-const { FiPlus, FiFilter, FiSearch, FiDownload, FiGrid, FiList, FiX } = FiIcons;
+const {
+  FiPlus,
+  FiFilter,
+  FiSearch,
+  FiDownload,
+  FiGrid,
+  FiList,
+  FiX,
+  FiEye,
+  FiEdit,
+  FiTrash2,
+  FiMessageSquare,
+  FiCalendar,
+  FiUser,
+  FiPhone,
+  FiMail
+} = FiIcons;
 
 const ReferralManagement = () => {
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingReferral, setEditingReferral] = useState(null);
+  const [viewingReferral, setViewingReferral] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
+  const [loading, setLoading] = useState(false);
+  const [referrals, setReferrals] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
     status: 'All',
@@ -19,11 +40,34 @@ const ReferralManagement = () => {
     priority: 'All'
   });
 
-  const { referrals, loading, createReferral, updateReferral, deleteReferral } = useReferrals(filters);
+  // Load referrals on component mount
+  useEffect(() => {
+    loadReferrals();
+  }, [user, filters]);
+
+  const loadReferrals = async () => {
+    if (!user?.userId) return;
+    
+    setLoading(true);
+    try {
+      const data = await DatabaseService.getReferrals(user.userId, filters);
+      setReferrals(data);
+    } catch (error) {
+      console.error('Error loading referrals:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCreateReferral = async (formData) => {
     try {
-      await createReferral(formData);
+      const newReferral = await DatabaseService.saveReferral({
+        ...formData,
+        referring_doctor_id: user.userId,
+        referring_doctor: user.name || 'Current User'
+      });
+      
+      setReferrals(prev => [newReferral, ...prev]);
       setShowForm(false);
       alert('Referral created successfully!');
     } catch (error) {
@@ -33,7 +77,10 @@ const ReferralManagement = () => {
 
   const handleUpdateReferral = async (formData) => {
     try {
-      await updateReferral(editingReferral.id, formData);
+      const updatedReferral = await DatabaseService.updateReferral(editingReferral.id, formData);
+      setReferrals(prev => prev.map(ref => 
+        ref.id === editingReferral.id ? updatedReferral : ref
+      ));
       setEditingReferral(null);
       setShowForm(false);
       alert('Referral updated successfully!');
@@ -45,7 +92,8 @@ const ReferralManagement = () => {
   const handleDeleteReferral = async (id) => {
     if (window.confirm('Are you sure you want to delete this referral?')) {
       try {
-        await deleteReferral(id);
+        await DatabaseService.deleteReferral(id);
+        setReferrals(prev => prev.filter(ref => ref.id !== id));
         alert('Referral deleted successfully!');
       } catch (error) {
         alert('Error deleting referral. Please try again.');
@@ -59,26 +107,28 @@ const ReferralManagement = () => {
   };
 
   const handleViewReferral = (referral) => {
-    // Implementation for viewing referral details
-    console.log('Viewing referral:', referral);
+    setViewingReferral(referral);
   };
 
   const handleMessageReferral = (referral) => {
     // Implementation for messaging about referral
-    console.log('Messaging about referral:', referral);
+    alert(`Opening message thread for referral: ${referral.patientName}`);
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const filteredReferrals = referrals.filter(referral => {
-    const matchesSearch = referral.patientName.toLowerCase().includes(filters.search.toLowerCase()) ||
-                         referral.specialty.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesSearch = referral.patientName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+                         referral.specialty?.toLowerCase().includes(filters.search.toLowerCase());
     const matchesStatus = filters.status === 'All' || referral.status === filters.status;
     const matchesSpecialty = filters.specialty === 'All' || referral.specialty === filters.specialty;
     const matchesPriority = filters.priority === 'All' || referral.priority === filters.priority;
-
+    
     return matchesSearch && matchesStatus && matchesSpecialty && matchesPriority;
   });
 
@@ -184,7 +234,9 @@ const ReferralManagement = () => {
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'grid' ? 'bg-white text-primary-600 shadow-sm' : 'text-dental-600'
+                    viewMode === 'grid' 
+                      ? 'bg-white text-primary-600 shadow-sm' 
+                      : 'text-dental-600'
                   }`}
                 >
                   <SafeIcon icon={FiGrid} className="w-4 h-4" />
@@ -192,7 +244,9 @@ const ReferralManagement = () => {
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'list' ? 'bg-white text-primary-600 shadow-sm' : 'text-dental-600'
+                    viewMode === 'list' 
+                      ? 'bg-white text-primary-600 shadow-sm' 
+                      : 'text-dental-600'
                   }`}
                 >
                   <SafeIcon icon={FiList} className="w-4 h-4" />
@@ -237,9 +291,8 @@ const ReferralManagement = () => {
             <h3 className="text-xl font-semibold text-dental-900 mb-2">No referrals found</h3>
             <p className="text-dental-600 mb-6">
               {referrals.length === 0 
-                ? "You haven't created any referrals yet."
-                : "No referrals match your current filters."
-              }
+                ? "You haven't created any referrals yet." 
+                : "No referrals match your current filters."}
             </p>
             <button
               onClick={() => setShowForm(true)}
@@ -308,25 +361,30 @@ const ReferralManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          referral.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                          referral.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                          referral.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                          referral.status === 'Completed' 
+                            ? 'bg-green-100 text-green-800'
+                            : referral.status === 'In Progress' 
+                            ? 'bg-blue-100 text-blue-800'
+                            : referral.status === 'Pending' 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-red-100 text-red-800'
                         }`}>
                           {referral.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          referral.priority === 'High' || referral.priority === 'Urgent' ? 'bg-red-100 text-red-800' :
-                          referral.priority === 'Medium' ? 'bg-orange-100 text-orange-800' :
-                          'bg-green-100 text-green-800'
+                          referral.priority === 'High' || referral.priority === 'Urgent' 
+                            ? 'bg-red-100 text-red-800'
+                            : referral.priority === 'Medium' 
+                            ? 'bg-orange-100 text-orange-800' 
+                            : 'bg-green-100 text-green-800'
                         }`}>
                           {referral.priority}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-dental-500">
-                        {referral.dateCreated}
+                        {new Date(referral.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button
@@ -347,6 +405,131 @@ const ReferralManagement = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Referral Details Modal */}
+        {viewingReferral && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              <div className="p-6 border-b border-dental-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-semibold text-dental-900">Referral Details</h3>
+                  <button
+                    onClick={() => setViewingReferral(null)}
+                    className="text-dental-400 hover:text-dental-600"
+                  >
+                    <SafeIcon icon={FiX} className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Patient Information */}
+                <div className="bg-dental-50 p-4 rounded-lg">
+                  <h4 className="text-lg font-semibold text-dental-900 mb-3 flex items-center">
+                    <SafeIcon icon={FiUser} className="w-5 h-5 mr-2" />
+                    Patient Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Name</label>
+                      <p className="text-dental-900">{viewingReferral.patientName}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Email</label>
+                      <p className="text-dental-900">{viewingReferral.patientEmail}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Phone</label>
+                      <p className="text-dental-900">{viewingReferral.patientPhone}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Address</label>
+                      <p className="text-dental-900">{viewingReferral.patientAddress}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Referral Details */}
+                <div className="bg-primary-50 p-4 rounded-lg">
+                  <h4 className="text-lg font-semibold text-dental-900 mb-3 flex items-center">
+                    <SafeIcon icon={FiCalendar} className="w-5 h-5 mr-2" />
+                    Referral Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Specialty</label>
+                      <p className="text-dental-900">{viewingReferral.specialty}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Priority</label>
+                      <p className="text-dental-900">{viewingReferral.priority}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Status</label>
+                      <p className="text-dental-900">{viewingReferral.status}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dental-600">Receiving Doctor</label>
+                      <p className="text-dental-900">{viewingReferral.receivingDoctor || 'Not assigned'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reason for Referral */}
+                {viewingReferral.reasonForReferral && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-dental-900 mb-3">Reason for Referral</h4>
+                    <p className="text-dental-700 bg-dental-50 p-4 rounded-lg">
+                      {viewingReferral.reasonForReferral}
+                    </p>
+                  </div>
+                )}
+
+                {/* Additional Notes */}
+                {viewingReferral.notes && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-dental-900 mb-3">Additional Notes</h4>
+                    <p className="text-dental-700 bg-dental-50 p-4 rounded-lg">
+                      {viewingReferral.notes}
+                    </p>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex space-x-4 pt-4 border-t border-dental-200">
+                  <button
+                    onClick={() => {
+                      setViewingReferral(null);
+                      handleEditReferral(viewingReferral);
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+                  >
+                    <SafeIcon icon={FiEdit} className="w-4 h-4" />
+                    <span>Edit Referral</span>
+                  </button>
+                  <button
+                    onClick={() => handleMessageReferral(viewingReferral)}
+                    className="flex items-center space-x-2 px-4 py-2 border border-dental-200 text-dental-600 rounded-lg hover:bg-dental-50 transition-colors"
+                  >
+                    <SafeIcon icon={FiMessageSquare} className="w-4 h-4" />
+                    <span>Send Message</span>
+                  </button>
+                  <button
+                    onClick={() => setViewingReferral(null)}
+                    className="flex items-center space-x-2 px-4 py-2 border border-dental-200 text-dental-600 rounded-lg hover:bg-dental-50 transition-colors"
+                  >
+                    <SafeIcon icon={FiX} className="w-4 h-4" />
+                    <span>Close</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>
